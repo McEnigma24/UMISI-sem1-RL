@@ -1,6 +1,8 @@
 from abc import abstractmethod
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 import itertools
+import os
 import random
 import time
 from typing import Optional, Protocol
@@ -327,11 +329,42 @@ class MCTSPlayer(Player):
         new_root.parent = None
         self.root_node = new_root
 
-def main(player: Player) -> int:
+
+def _play_mcts_vs_random_once(job: tuple[float, float, int]) -> int:
+    """Jedna partia MCTS (RED) vs losowy (BLUE). Funkcja modułowa — pickling pod Windows (spawn)."""
+    time_limit, c_coefficient, seed = job
+    random.seed(seed)
+    board = Board(7, 5)
+    red_player = MCTSPlayer(time_limit, c_coefficient)
+    blue_player = RandomPlayer()
+    game = Game(red_player, blue_player, board)
+    game.run(verbose=False)
+    return 1 if game.winner == Colour.RED else 0
+
+
+def main(
+    player: Player,
+    *,
+    n_games: int = 100,
+    parallel_games: bool = True,
+    max_workers: Optional[int] = None,
+) -> int:
+    """Dla MCTS: domyślnie równoległe partie w procesach (CPU-bound; wątki przez GIL mało dają)."""
+    if parallel_games and isinstance(player, MCTSPlayer):
+        workers = max_workers if max_workers is not None else (os.cpu_count() or 1)
+        if workers > 1:
+            t, c = player.time_limit, player.c_coefficient
+            jobs = [(t, c, i) for i in range(n_games)]
+            red_wins = 0
+            with ProcessPoolExecutor(max_workers=workers) as ex:
+                for result in ex.map(_play_mcts_vs_random_once, jobs):
+                    red_wins += result
+            print(f"{red_wins} - {n_games - red_wins}", end="", flush=True)
+            return red_wins
+
     red_wins = 0
     blue_wins = 0
-
-    for _ in range(100):
+    for _ in range(n_games):
         board = Board(7, 5)
         red_player = player.copy()
         blue_player = RandomPlayer()
@@ -401,7 +434,7 @@ if __name__ == '__main__':
     _plots_dir = os.path.join(_here, 'plots')
     os.makedirs(_plots_dir, exist_ok=True)
 
-    num_outer_runs = 10
+    num_outer_runs = 5
 
     matrix: list[list[float]] = []
     run_rows: list[list[list[int]]] = []

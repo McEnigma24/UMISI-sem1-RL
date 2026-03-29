@@ -1,3 +1,5 @@
 Set-Location $PSScriptRoot
 cls
-python isolation.py
+# python isolation.py
+
+py -3.13 isolation.py
