@@ -366,10 +366,11 @@ if __name__ == '__main__':
                         0.25,
                         0.2,
                         0.1,
-                        0.0
+                        0.0,
                     ]
 
-    time_limits = [ 0.2,           # 200   ms
+    time_limits = [ 
+                    0.2,           # 200   ms
                     0.1,           # 100   ms
                     0.05,          # 50    ms
                     0.025,         # 25    ms
@@ -400,7 +401,7 @@ if __name__ == '__main__':
     _plots_dir = os.path.join(_here, 'plots')
     os.makedirs(_plots_dir, exist_ok=True)
 
-    num_outer_runs = 30
+    num_outer_runs = 10
 
     matrix: list[list[float]] = []
     run_rows: list[list[list[int]]] = []
