@@ -3,11 +3,14 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+import os
 import random
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Literal
 
 import numpy as np
 import sklearn.preprocessing as skl_preprocessing
+from tqdm import tqdm
 
 import problem as problem_module
 from problem import (
@@ -21,6 +24,8 @@ from problem import (
 )
 
 ALMOST_INFINITE_STEP = 100000
+
+PLOTS_DIR = "plots"
 
 BehaviorMode = Literal["epsilon_greedy", "push_forward"]
 
@@ -99,7 +104,9 @@ class OffPolicyNStepSarsaDriver(Driver):
 
         self.q: dict[tuple[State, Action], float] = collections.defaultdict(float)
         self.current_step: int = 0
-        self.final_step: int = ALMOST_INFINITE_STEP
+        # T z Sutton–Barto: pierwszy indeks *po* końcu epizodu (terminal albo limit kroków).
+        # Ustawiane na current_step + 1 w momencie obserwacji końca; ostatnia aktualizacja przy tau = T - 1.
+        self.episode_T: int = ALMOST_INFINITE_STEP
         self.finished: bool = False
         self.states: dict[int, State] = {}
         self.actions: dict[int, Action] = {}
@@ -110,18 +117,18 @@ class OffPolicyNStepSarsaDriver(Driver):
         self.states[self._access_index(self.current_step)] = state
         action = self._select_action(self._behavior_policy(state, available_actions(state)))
         self.actions[self._access_index(self.current_step)] = action
-        self.final_step = ALMOST_INFINITE_STEP
+        self.episode_T = ALMOST_INFINITE_STEP
         self.finished = False
         return action
 
     def control(self, state: State, last_reward: int) -> Action:
-        if self.current_step < self.final_step:
+        if self.episode_T == ALMOST_INFINITE_STEP or self.current_step < self.episode_T:
             self.rewards[self._access_index(self.current_step + 1)] = last_reward
             self.states[self._access_index(self.current_step + 1)] = state
-            if self.final_step == ALMOST_INFINITE_STEP and (
+            if self.episode_T == ALMOST_INFINITE_STEP and (
                 last_reward == 0 or self.current_step == problem_module.MAX_LEARNING_STEPS
             ):
-                self.final_step = self.current_step
+                self.episode_T = self.current_step + 1
             action = self._select_action(self._behavior_policy(state, available_actions(state)))
             self.actions[self._access_index(self.current_step + 1)] = action
         else:
@@ -137,7 +144,7 @@ class OffPolicyNStepSarsaDriver(Driver):
                 self.step_size * return_value_weight * (return_value - self.q[state_t, action_t])
             )
 
-        if update_step == self.final_step - 1:
+        if self.episode_T != ALMOST_INFINITE_STEP and update_step == self.episode_T - 1:
             self.finished = True
 
         self.current_step += 1
@@ -265,6 +272,9 @@ def train_off_policy(
     behavior_mode: BehaviorMode = "epsilon_greedy",
     push_forward_bias: float = 0.5,
     steering_fail_chance: float = 0.01,
+    enable_drawing: bool = True,
+    episode_step_progress: bool = False,
+    show_episode_progress: bool = True,
 ) -> tuple[OffPolicyNStepSarsaDriver, list[int]]:
     driver = OffPolicyNStepSarsaDriver(
         step_size=step_size,
@@ -282,6 +292,9 @@ def train_off_policy(
         ),
         driver=driver,
         number_of_episodes=episodes,
+        enable_drawing=enable_drawing,
+        episode_step_progress=episode_step_progress,
+        show_episode_progress=show_episode_progress,
     )
     experiment.run()
     penalties = list(experiment.penalties or [])
@@ -294,46 +307,182 @@ def mean_last_window(penalties: list[int], window: int) -> float:
     return float(np.mean(penalties[-window:]))
 
 
-def cmd_param_study() -> None:
+def normalized_episode_penalty_cost(mean_penalty: float, max_learning_steps: int) -> float:
+    """|średnia kara na epizod| / (|kara za krok| * max_kroków) = |średnia| / max_learning_steps.
+
+    Kara za krok to -1, maksymalna możliwa suma (co do modułu) przy limicie kroków to max_learning_steps.
+    Im mniejsza wartość, tym lepiej; na wykresie „im wyżej tym gorzej” użyj tej samej wielkości
+    (dobre polityki leżą blisko 0, bardzo złe zbliżają się do 1).
+    """
+    return abs(float(mean_penalty)) / float(max_learning_steps)
+
+
+PARAM_STUDY_CSV_FIELDS = [
+    "alpha",
+    "n",
+    "max_learning_steps",
+    "mean_penalty_last_window",
+    "normalized_cost",
+]
+
+
+def _resolve_param_study_jobs(requested: int, num_tasks: int) -> int:
+    if num_tasks <= 0:
+        return 1
+    if requested <= 0:
+        cpu = os.cpu_count() or 1
+        return max(1, min(cpu, num_tasks))
+    return max(1, min(requested, num_tasks))
+
+
+def _param_study_worker(payload: tuple) -> dict[str, float | int]:
+    """Jedna para (n, α) — top-level pod multiprocessing (import w procesach potomnych)."""
+    (
+        corner,
+        episodes,
+        alpha,
+        n,
+        experiment_rate,
+        discount,
+        window,
+        max_episode_steps,
+    ) = payload
+    _, penalties = train_off_policy(
+        corner,
+        episodes,
+        step_size=alpha,
+        step_no=n,
+        experiment_rate=experiment_rate,
+        discount=discount,
+        enable_drawing=False,
+        episode_step_progress=False,
+        show_episode_progress=False,
+    )
+    mean_p = mean_last_window(penalties, window)
+    return {
+        "alpha": alpha,
+        "n": n,
+        "max_learning_steps": max_episode_steps,
+        "mean_penalty_last_window": round(mean_p, 4),
+        "normalized_cost": round(
+            normalized_episode_penalty_cost(mean_p, max_episode_steps), 6
+        ),
+    }
+
+
+def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> None:
+    """Studium jak w instrukcji (corner_c): wpływ α i n (n-krokowy SARSA).
+
+    Limit długości epizodu: `problem.MAX_LEARNING_STEPS` (bez nadpisywania globala).
+    Zapisuje znormalizowany koszt: |średnia kara w ostatnim oknie| / MAX_LEARNING_STEPS.
+
+    Bez rysowania PNG; każdy wiersz CSV dopisywany od razu (flush + fsync), żeby przy przerwaniu
+    nie stracić wcześniejszych wyników. Ponowne uruchomienie dopisuje do istniejącego pliku —
+    usuń CSV, jeśli chcesz świeży zestaw od zera.
+
+    Opcjonalny pasek „Kroki w epizodzie”: `python solution.py param_study --episode-step-progress`
+    (tylko przy `-j 1`).
+
+    Równoległość: `-j N` lub `-j 0` (min(rdzenie, liczba zadań)). Jeden pasek w głównym procesie:
+    „param_study (zadania)” = ile par (n, α) już domknięto. W workerach **brak** tqdm po epizodach
+    / krokach (żeby nie mieszać wielu procesów w jednym terminalu).
+    """
     corner = "corner_c"
     episodes = 600
+    # episodes = 300
+    # episodes = 10
     window = 100
-    alphas = [0.1, 0.2, 0.3, 0.5]
-    max_steps_list = [300, 500, 800]
+    n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+    # n_list = [1, 2]
+    alphas = [round(i * 0.1, 1) for i in range(11)]
+    # alphas = [0.1]
 
-    out_path = "plots/param_study_corner_c.csv"
-    rows: list[dict[str, float | int | str]] = []
-    old_max = problem_module.MAX_LEARNING_STEPS
-    try:
-        for alpha in alphas:
-            for max_steps in max_steps_list:
-                problem_module.MAX_LEARNING_STEPS = max_steps
-                _, penalties = train_off_policy(
+    max_episode_steps = problem_module.MAX_LEARNING_STEPS
+    experiment_rate = 0.05
+    discount = 1.0
+
+    tasks: list[tuple[int, float]] = [(n, a) for n in n_list for a in alphas]
+    n_workers = _resolve_param_study_jobs(jobs, len(tasks))
+
+    if n_workers > 1 and episode_step_progress:
+        print(
+            "Uwaga: --episode-step-progress jest ignorowane przy równoległym param_study (-j > 1)."
+        )
+
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+    out_path = os.path.join(PLOTS_DIR, "param_study_corner_c.csv")
+    need_header = not os.path.exists(out_path) or os.path.getsize(out_path) == 0
+    rows_written = 0
+    with open(out_path, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=PARAM_STUDY_CSV_FIELDS)
+        if need_header:
+            w.writeheader()
+            f.flush()
+            os.fsync(f.fileno())
+        if n_workers == 1:
+            for n in tqdm(n_list, desc="n (kroków SARSA)"):
+                for alpha in alphas:
+                    _, penalties = train_off_policy(
+                        corner,
+                        episodes,
+                        step_size=alpha,
+                        step_no=n,
+                        experiment_rate=experiment_rate,
+                        discount=discount,
+                        enable_drawing=False,
+                        episode_step_progress=episode_step_progress,
+                        show_episode_progress=True,
+                    )
+                    mean_p = mean_last_window(penalties, window)
+                    row = {
+                        "alpha": alpha,
+                        "n": n,
+                        "max_learning_steps": max_episode_steps,
+                        "mean_penalty_last_window": round(mean_p, 4),
+                        "normalized_cost": round(
+                            normalized_episode_penalty_cost(mean_p, max_episode_steps), 6
+                        ),
+                    }
+                    w.writerow(row)
+                    f.flush()
+                    os.fsync(f.fileno())
+                    rows_written += 1
+        else:
+            payloads = [
+                (
                     corner,
                     episodes,
-                    step_size=alpha,
-                    step_no=5,
-                    experiment_rate=0.05,
-                    discount=1.0,
+                    alpha,
+                    n,
+                    experiment_rate,
+                    discount,
+                    window,
+                    max_episode_steps,
                 )
-                rows.append(
-                    {
-                        "alpha": alpha,
-                        "max_learning_steps": max_steps,
-                        "mean_penalty_last_window": mean_last_window(penalties, window),
-                    }
-                )
-    finally:
-        problem_module.MAX_LEARNING_STEPS = old_max
+                for n, alpha in tasks
+            ]
+            with ProcessPoolExecutor(max_workers=n_workers) as pool:
+                futures = [pool.submit(_param_study_worker, p) for p in payloads]
+                for fut in tqdm(
+                    as_completed(futures),
+                    total=len(futures),
+                    desc="param_study",
+                    unit="zadanie",
+                    dynamic_ncols=True,
+                    mininterval=0.2,
+                ):
+                    row = fut.result()
+                    w.writerow(row)
+                    f.flush()
+                    os.fsync(f.fileno())
+                    rows_written += 1
+    print(f"Dopisano {rows_written} wierszy do {out_path}")
+    if rows_written > 0:
+        import utils as utils_module
 
-    import os
-
-    os.makedirs("plots", exist_ok=True)
-    with open(out_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["alpha", "max_learning_steps", "mean_penalty_last_window"])
-        w.writeheader()
-        w.writerows(rows)
-    print(f"Zapisano {out_path}")
+        png_path = os.path.join(PLOTS_DIR, "param_study_corner_c.png")
+        utils_module.plot_param_study_n_alpha(out_path, png_path)
+        print(f"Wykres: {png_path}")
 
 
 def cmd_compare_push_and_is() -> None:
@@ -341,13 +490,12 @@ def cmd_compare_push_and_is() -> None:
     corner = "corner_c"
     episodes = 800
     window = 100
-    problem_module.MAX_LEARNING_STEPS = 500
     configs: list[tuple[str, BehaviorMode, bool, float]] = [
         ("epsilon_is", "epsilon_greedy", True, 0.0),
         ("push_is", "push_forward", True, 0.5),
         ("push_no_is", "push_forward", False, 0.5),
     ]
-    out_path = "plots/compare_behavior_is.csv"
+    out_path = os.path.join(PLOTS_DIR, "compare_behavior_is.csv")
     rows: list[dict[str, object]] = []
     for name, mode, use_is, pfb in configs:
         _, penalties = train_off_policy(
@@ -367,9 +515,7 @@ def cmd_compare_push_and_is() -> None:
                 "mean_penalty_last_window": mean_last_window(penalties, window),
             }
         )
-    import os
-
-    os.makedirs("plots", exist_ok=True)
+    os.makedirs(PLOTS_DIR, exist_ok=True)
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["name", "mean_penalty_last_window"])
         w.writeheader()
@@ -390,8 +536,29 @@ def main() -> None:
             "train_d",
             "greedy_viz",
             "param_study",
+            "param_study_plot",
             "compare_push_is",
         ],
+    )
+    parser.add_argument(
+        "--episode-step-progress",
+        action="store_true",
+        help=(
+            "Tylko dla param_study: włącz wewnętrzny pasek tqdm "
+            "(„Kroki w epizodzie …”). Domyślnie wyłączony."
+        ),
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "param_study: liczba równoległych procesów (1 = sekwencyjnie). "
+            "0 = min(rdzenie CPU, liczba par n×α). "
+            "Pasek postępu: ukończone zadania (n,α); bez tqdm epizodów w workerach."
+        ),
     )
     args = parser.parse_args()
 
@@ -455,7 +622,19 @@ def main() -> None:
         return
 
     if args.mode == "param_study":
-        cmd_param_study()
+        cmd_param_study(
+            episode_step_progress=args.episode_step_progress,
+            jobs=args.jobs,
+        )
+        return
+
+    if args.mode == "param_study_plot":
+        import utils as utils_module
+
+        csv_path = os.path.join(PLOTS_DIR, "param_study_corner_c.csv")
+        png_path = os.path.join(PLOTS_DIR, "param_study_corner_c.png")
+        utils_module.plot_param_study_n_alpha(csv_path, png_path)
+        print(f"Zapisano {png_path}")
         return
 
     if args.mode == "compare_push_is":

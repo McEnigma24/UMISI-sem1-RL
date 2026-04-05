@@ -154,10 +154,16 @@ class Experiment:
     current_episode_no: int = 0
     penalties: Optional[list] = None  # tutaj będą się gromadzić kary przyznane w kolejnych epizodach
     draw_every_episode: bool = False
+    enable_drawing: bool = True
+    episode_step_progress: bool = False
+    show_episode_progress: bool = True
 
     def run(self) -> None:
         self.penalties = []
-        for _ in tqdm(range(self.number_of_episodes)):
+        ep_it = range(self.number_of_episodes)
+        if self.show_episode_progress:
+            ep_it = tqdm(ep_it, desc="Epizody")
+        for _ in ep_it:
             episode_penalty = self._episode()
             self.penalties.append(episode_penalty)
             self.current_episode_no += 1
@@ -165,16 +171,34 @@ class Experiment:
     def _episode(self) -> int:
         positions = []
         car = self.environment.spawn_car(self.driver)
-        while True:
-            positions.append(car.position())
-            car.drive()
-            if car.driver.finished_learning():
+        step_pbar = None
+        if self.episode_step_progress:
+            step_pbar = tqdm(
+                total=MAX_LEARNING_STEPS,
+                leave=False,
+                unit="krok",
+                desc=f"Kroki w epizodzie #{self.current_episode_no}",
+                mininterval=0.15,
+                dynamic_ncols=True,
+            )
+        try:
+            while True:
                 positions.append(car.position())
-                break
+                car.drive()
+                if step_pbar is not None:
+                    step_pbar.update(1)
+                if car.driver.finished_learning():
+                    positions.append(car.position())
+                    break
+        finally:
+            if step_pbar is not None:
+                step_pbar.close()
         self._draw_episode(positions)
         return car.total_penalties
 
     def _draw_episode(self, positions: list[Position]) -> None:
+        if not self.enable_drawing:
+            return
         if self.draw_every_episode or self.current_episode_no % DRAWING_FREQUENCY == 0:
             utils.draw_episode(self.environment.corner.image, positions, self.current_episode_no)
             utils.draw_penalties_plot(self.penalties, AVERAGING_WINDOW_SIZE, self.current_episode_no)
