@@ -3,13 +3,15 @@ from __future__ import annotations
 import argparse
 import collections
 import csv
+import json
 import os
 import random
+import time
+from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Literal
 
 import numpy as np
-import sklearn.preprocessing as skl_preprocessing
 from tqdm import tqdm
 
 import problem as problem_module
@@ -26,6 +28,40 @@ from problem import (
 ALMOST_INFINITE_STEP = 100000
 
 PLOTS_DIR = "plots"
+
+# #region agent log
+_AGENT_DEBUG_LOG = Path(__file__).resolve().parents[2] / "debug-cabcfa.log"
+_BAD_PROB_LOG_BUDGET = 8
+
+
+def _agent_debug_log(
+    location: str,
+    message: str,
+    *,
+    data: dict,
+    hypothesis_id: str,
+    run_id: str = "post-fix",
+) -> None:
+    try:
+        line = json.dumps(
+            {
+                "sessionId": "cabcfa",
+                "timestamp": int(time.time() * 1000),
+                "location": location,
+                "message": message,
+                "data": data,
+                "hypothesisId": hypothesis_id,
+                "runId": run_id,
+            },
+            default=str,
+        )
+        with _AGENT_DEBUG_LOG.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
+
+
+# #endregion
 
 BehaviorMode = Literal["epsilon_greedy", "push_forward"]
 
@@ -185,10 +221,33 @@ class OffPolicyNStepSarsaDriver(Driver):
     def _access_index(self, index: int) -> int:
         return index % (self.step_no + 1)
 
-    @staticmethod
-    def _select_action(actions_distribution: dict[Action, float]) -> Action:
+    def _select_action(self, actions_distribution: dict[Action, float]) -> Action:
         actions = list(actions_distribution.keys())
         probabilities = list(actions_distribution.values())
+        # #region agent log
+        global _BAD_PROB_LOG_BUDGET
+        p_arr = np.asarray(probabilities, dtype=np.float64)
+        p_sum = float(np.nansum(p_arr))
+        bad = (not np.all(np.isfinite(p_arr))) or (not np.isclose(p_sum, 1.0, rtol=0.0, atol=1e-8))
+        if bad and _BAD_PROB_LOG_BUDGET > 0:
+            _BAD_PROB_LOG_BUDGET -= 1
+            _agent_debug_log(
+                "solution.py:_select_action",
+                "invalid p before np.random.choice",
+                data={
+                    "behavior_mode": self.behavior_mode,
+                    "experiment_rate": float(self.experiment_rate),
+                    "n_actions": len(actions),
+                    "p_sum": p_sum,
+                    "p_min": float(np.nanmin(p_arr)) if p_arr.size else None,
+                    "p_max": float(np.nanmax(p_arr)) if p_arr.size else None,
+                    "any_nan": bool(np.any(np.isnan(p_arr))),
+                    "any_inf": bool(np.any(np.isinf(p_arr))),
+                    "prob_sample": [float(x) for x in probabilities[:6]],
+                },
+                hypothesis_id="H1_H2_H3_H4",
+            )
+        # #endregion
         i = np.random.choice(list(range(len(actions))), p=probabilities)
         return actions[i]
 
@@ -239,7 +298,15 @@ class OffPolicyNStepSarsaDriver(Driver):
 
     @staticmethod
     def _normalise(probabilities: np.ndarray) -> np.ndarray:
-        return skl_preprocessing.normalize(probabilities.reshape(1, -1), norm="l1")[0]
+        """L1-normalizacja nieujemnego wektora; przy sumie 0 lub NaN — rozkład jednostajny."""
+        v = np.asarray(probabilities, dtype=np.float64).reshape(-1)
+        n = int(v.size)
+        if n == 0:
+            return v
+        s = float(np.nansum(v))
+        if not np.isfinite(s) or s <= 0.0:
+            return np.full(n, 1.0 / n)
+        return v / s
 
 
 def run_greedy_rollouts(
@@ -388,14 +455,26 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     / krokach (żeby nie mieszać wielu procesów w jednym terminalu).
     """
     corner = "corner_c"
-    episodes = 600
-    # episodes = 300
-    # episodes = 10
     window = 100
-    n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
-    # n_list = [1, 2]
+
+
+    # n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+
+    # episodes = 1000
+    # episodes = 450
+    # episodes = 300
+
+    
+    # episodes = 600
+    # n_list = [1, 2, 4, 8, 16]
+
+    episodes = 600
+    n_list = [32, 64, 128]
+
     alphas = [round(i * 0.1, 1) for i in range(11)]
     # alphas = [0.1]
+
+
 
     max_episode_steps = problem_module.MAX_LEARNING_STEPS
     experiment_rate = 0.05
