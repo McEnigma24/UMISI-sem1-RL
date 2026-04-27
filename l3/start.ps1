@@ -1,3 +1,5 @@
 Set-Location $PSScriptRoot
 cls
-py -3.13 solution.py param_study -j 16
+# python isolation.py
+
+py -3.13 isolation.py

@@ -454,6 +454,9 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     „param_study (zadania)” = ile par (n, α) już domknięto. W workerach **brak** tqdm po epizodach
     / krokach (żeby nie mieszać wielu procesów w jednym terminalu).
     """
+
+
+
     corner = "corner_c"
     window = 100
 
@@ -464,15 +467,21 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     # episodes = 450
     # episodes = 300
 
-    
+
     # episodes = 600
     # n_list = [1, 2, 4, 8, 16]
 
-    episodes = 600
-    n_list = [32, 64, 128]
+    # episodes = 600
+    # n_list = [32, 64, 128]
 
-    alphas = [round(i * 0.1, 1) for i in range(11)]
+    # alphas = [round(i * 0.1, 1) for i in range(11)]
     # alphas = [0.1]
+
+
+    corner = "corner_d"
+    episodes = 600
+    alphas = [0.5]
+    n_list = [4]
 
 
 
