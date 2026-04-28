@@ -343,6 +343,12 @@ def train_off_policy(
     episode_step_progress: bool = False,
     show_episode_progress: bool = True,
 ) -> tuple[OffPolicyNStepSarsaDriver, list[int]]:
+    """Trening off-policy n-step SARSA.
+
+    ``use_importance_sampling=False`` ustawia wagę aktualizacji na 1 (bez IS w
+    ``_return_value_weight``). Przy ``behavior_mode='push_forward'`` i wyłączonym
+    IS estymacja nie jest już poprawnie skierowana na zachłanną politykę docelową π.
+    """
     driver = OffPolicyNStepSarsaDriver(
         step_size=step_size,
         step_no=step_no,
@@ -457,9 +463,7 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
 
 
 
-    corner = "corner_c"
     window = 100
-
 
     # n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
@@ -498,7 +502,7 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
         )
 
     os.makedirs(PLOTS_DIR, exist_ok=True)
-    out_path = os.path.join(PLOTS_DIR, "param_study_corner_c.csv")
+    out_path = os.path.join(PLOTS_DIR, f"param_study_{corner}.csv")
     need_header = not os.path.exists(out_path) or os.path.getsize(out_path) == 0
     rows_written = 0
     with open(out_path, "a", newline="", encoding="utf-8") as f:
@@ -568,20 +572,31 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     if rows_written > 0:
         import utils as utils_module
 
-        png_path = os.path.join(PLOTS_DIR, "param_study_corner_c.png")
+        png_path = os.path.join(PLOTS_DIR, f"param_study_{corner}.png")
         utils_module.plot_param_study_n_alpha(out_path, png_path)
         print(f"Wykres: {png_path}")
 
 
-def cmd_compare_push_and_is() -> None:
-    """corner_c: ε-greedy vs pędzący agent; z IS i bez IS (pędzący)."""
-    corner = "corner_c"
-    episodes = 800
-    window = 100
+def cmd_compare_push_and_is(
+    *,
+    corner: str = "corner_c",
+    episodes: int = 800,
+    step_size: float = 0.5,
+    step_no: int = 4,
+    experiment_rate: float = 0.05,
+    discount: float = 1.0,
+    push_forward_bias: float = 0.5,
+    window: int = 100,
+) -> None:
+    """corner_c (domyślnie): ε-greedy vs pędzący agent; z IS i bez IS (pędzący).
+
+    Domyślne n i α (4, 0.5) zgodne z typowym optimum studium parametru na corner_d;
+    można nadpisać flagami CLI przy `compare_push_is`.
+    """
     configs: list[tuple[str, BehaviorMode, bool, float]] = [
         ("epsilon_is", "epsilon_greedy", True, 0.0),
-        ("push_is", "push_forward", True, 0.5),
-        ("push_no_is", "push_forward", False, 0.5),
+        ("push_is", "push_forward", True, push_forward_bias),
+        ("push_no_is", "push_forward", False, push_forward_bias),
     ]
     out_path = os.path.join(PLOTS_DIR, "compare_behavior_is.csv")
     rows: list[dict[str, object]] = []
@@ -589,10 +604,10 @@ def cmd_compare_push_and_is() -> None:
         _, penalties = train_off_policy(
             corner,
             episodes,
-            step_size=0.3,
-            step_no=5,
-            experiment_rate=0.05,
-            discount=1.0,
+            step_size=step_size,
+            step_no=step_no,
+            experiment_rate=experiment_rate,
+            discount=discount,
             use_importance_sampling=use_is,
             behavior_mode=mode,
             push_forward_bias=pfb,
@@ -647,6 +662,58 @@ def main() -> None:
             "0 = min(rdzenie CPU, liczba par n×α). "
             "Pasek postępu: ukończone zadania (n,α); bez tqdm epizodów w workerach."
         ),
+    )
+    parser.add_argument(
+        "--param-study-corner",
+        type=str,
+        default="corner_c",
+        metavar="NAME",
+        help=(
+            "param_study_plot: nazwa zakrętu w plikach "
+            "plots/param_study_<NAME>.csv i .png (np. corner_c, corner_d)."
+        ),
+    )
+    parser.add_argument(
+        "--compare-corner",
+        type=str,
+        default="corner_c",
+        metavar="NAME",
+        help="compare_push_is: nazwa zakrętu (np. corner_c).",
+    )
+    parser.add_argument(
+        "--compare-episodes",
+        type=int,
+        default=800,
+        metavar="N",
+        help="compare_push_is: liczba epizodów treningu.",
+    )
+    parser.add_argument(
+        "--compare-alpha",
+        type=float,
+        default=0.5,
+        metavar="A",
+        help="compare_push_is: krok uczenia α (step_size).",
+    )
+    parser.add_argument(
+        "--compare-n",
+        type=int,
+        default=4,
+        metavar="N",
+        help="compare_push_is: horyzont n-krokowy SARSA (step_no).",
+    )
+    parser.add_argument(
+        "--compare-epsilon",
+        type=float,
+        default=0.05,
+        metavar="E",
+        help="compare_push_is: ε w polityce ε-greedy (experiment_rate).",
+    )
+    parser.add_argument(
+        "--compare-push-bias",
+        type=float,
+        default=0.5,
+        metavar="P",
+        help="compare_push_is: waga p w mieszance push_forward (push_forward_bias).",
     )
     args = parser.parse_args()
 
@@ -719,14 +786,22 @@ def main() -> None:
     if args.mode == "param_study_plot":
         import utils as utils_module
 
-        csv_path = os.path.join(PLOTS_DIR, "param_study_corner_c.csv")
-        png_path = os.path.join(PLOTS_DIR, "param_study_corner_c.png")
+        cname = args.param_study_corner
+        csv_path = os.path.join(PLOTS_DIR, f"param_study_{cname}.csv")
+        png_path = os.path.join(PLOTS_DIR, f"param_study_{cname}.png")
         utils_module.plot_param_study_n_alpha(csv_path, png_path)
         print(f"Zapisano {png_path}")
         return
 
     if args.mode == "compare_push_is":
-        cmd_compare_push_and_is()
+        cmd_compare_push_and_is(
+            corner=args.compare_corner,
+            episodes=args.compare_episodes,
+            step_size=args.compare_alpha,
+            step_no=args.compare_n,
+            experiment_rate=args.compare_epsilon,
+            push_forward_bias=args.compare_push_bias,
+        )
         return
 
 
