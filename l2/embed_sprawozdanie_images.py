@@ -37,48 +37,74 @@ def main() -> None:
         c["attachments"] = attachments
         c["source"] = source_lines
 
-    # --- cell 4: corner_b ---
-    eb = root / "corrner_b___track_800.png"
-    if eb.is_file():
+    def _gr_or_plots(rel: str) -> Path | None:
+        return _first_existing(
+            root,
+            [Path(f"greedy_rollout_corner_b/{rel}"), Path(f"plots/{rel}")],
+        )
+
+    # --- cell 4: corner_b (krótki wstęp + jeden przykładowy tor z treningu) ---
+    hero = _first_existing(
+        root,
+        [
+            Path("corrner_b___track_800.png"),
+            Path("greedy_rollout_corner_b/track_29950.png"),
+            Path("plots/track_29950.png"),
+        ],
+    )
+    if hero is not None:
         set_md_attachments(
             4,
-            {"eb_track800.png": _mime_png(eb)},
+            {"eb_corner_b.png": _mime_png(hero)},
             [
                 "## corner_b\n",
                 "\n",
                 "`python solution.py train_b` — trening na corner_b (w `main`: "
-                "$\\alpha=0.3$, $n=5$, $\\varepsilon=0.05$, 30k epizodów), potem rollout zachłanny.\n",
+                "$\\alpha=0.3$, $n=5$, $\\varepsilon=0.05$, 30 000 epizodów), potem rollout zachłanny "
+                "(`run_greedy_rollouts`, `GreedyPolicyDriver`, numery `track_30001+`).\n",
                 "\n",
-                "Przykładowa bitmapa z treningu (tor + strzałki):\n",
+                "Przykładowy tor z fazy uczenia (tor + strzałki; wciąż polityka zachowania $b$):\n",
                 "\n",
-                "![corner_b track](attachment:eb_track800.png)\n",
+                "![corner_b — trening](attachment:eb_corner_b.png)\n",
             ],
         )
     else:
-        print("Pominięto cell 4 — brak:", eb)
+        print("Pominięto cell 4 — brak obrazu corner_b")
 
-    # --- cell 5: greedy + penalties ---
-    gr_dir = root / "greedy_rollout_corner_b"
-    tracks = [gr_dir / f"track_{30001 + i}.png" for i in range(4)]
-    pens = [
-        gr_dir / "penalties_50.png",
-        gr_dir / "penalties_450.png",
-        gr_dir / "penalties_1350.png",
-        gr_dir / "penalties_5550.png",
-        gr_dir / "penalties_26100.png",
+    # --- cell 5: te same pliki co wcześniej, tylko inna kolejność — najpierw trening (penalties), potem greedy (track_30001+) ---
+    pens_rel = [
+        "penalties_50.png",
+        "penalties_450.png",
+        "penalties_1350.png",
+        "penalties_5550.png",
+        "penalties_26100.png",
     ]
+    p_names = ["gr_p50.png", "gr_p450.png", "gr_p1350.png", "gr_p5550.png", "gr_p26100.png"]
     att: dict[str, dict[str, str]] = {}
     lines: list[str] = [
         "## Trasy przy zachłannej polityce (po uczeniu)\n",
         "\n",
-        "Podczas uczenia akcje bierze polityka behawioralna $b$ (np. $\\varepsilon$-greedy). "
-        "Po treningu `train_b` woła `run_greedy_rollouts`, który uruchamia `Experiment` z "
-        "`GreedyPolicyDriver`, `draw_every_episode=True` oraz `current_episode_no=30001` "
-        "(pierwszy rollout to pliki `track_30001.png`, …).\n",
+        "Poniżej **ta sama sesja** `train_b`, ale w kolejności czytelnej dla czytelnika: najpierw "
+        "**wykresy kary z treningu** (`penalties_*`, numery epizodów $\\leq 30000$), potem **trasy "
+        "rolloutu zachłannego** (`track_30001+`, osobny `Experiment` z `GreedyPolicyDriver` na tym samym $Q$).\n",
         "\n",
-        "W `utils.draw_episode` / `draw_penalties_plot` ścieżki są względem **bieżącego katalogu** "
-        "(typowo `plots/track_<nr>.png` przy uruchomieniu z `l2/`). Poniższe zrzty pochodzą z kopii "
-        "w `greedy_rollout_corner_b/` (ten sam schemat nazw).\n",
+        "### Kara w czasie treningu (`penalties_*`)\n",
+        "\n",
+        "Średnia krocząca w oknie `problem.AVERAGING_WINDOW_SIZE` (25), zapis co "
+        "`problem.DRAWING_FREQUENCY` (50) epizodów.\n",
+        "\n",
+    ]
+    for rel, aname in zip(pens_rel, p_names, strict=True):
+        p = _gr_or_plots(rel)
+        if p is None:
+            print("Brak penalties:", rel)
+            continue
+        att[aname] = _mime_png(p)
+        lines.append(f"![{p.stem}](attachment:{aname})\n")
+
+    lines += [
+        "\n",
+        "### Zachłanne przejazdy — rollout po uczeniu (`track_30001+`)\n",
         "\n",
         "```python\n",
         "greedy_driver = GreedyPolicyDriver(q)\n",
@@ -92,38 +118,22 @@ def main() -> None:
         "eval_exp.run()\n",
         "```\n",
         "\n",
-        "### Zachłanne przejazdy (rollout po uczeniu)\n",
     ]
     t_names = ["gr_t30001.png", "gr_t30002.png", "gr_t30003.png", "gr_t30004.png"]
-    for p, aname in zip(tracks, t_names, strict=True):
-        if not p.is_file():
-            print("Brak pliku rollout:", p)
+    for i in range(4):
+        ep = 30001 + i
+        p = _gr_or_plots(f"track_{ep}.png")
+        if p is None:
+            print("Brak rollout track:", ep)
             continue
+        aname = t_names[i]
         att[aname] = _mime_png(p)
-        ep = p.stem.split("_")[-1]
         lines.append(f"![track ep. {ep}](attachment:{aname})\n")
-    lines += [
-        "\n",
-        "**Kara w czasie treningu** — `penalties_<nr>.png` to uśredniona kara w oknie "
-        "(`problem.AVERAGING_WINDOW_SIZE`); zapisy co `problem.DRAWING_FREQUENCY` epizodów "
-        "(domyślnie 50), przy zapisie używany jest numer **właśnie zakończonego** epizodu.\n",
-        "\n",
-    ]
-    p_names = ["gr_p50.png", "gr_p450.png", "gr_p1350.png", "gr_p5550.png", "gr_p26100.png"]
-    for p, aname in zip(pens, p_names, strict=True):
-        if not p.is_file():
-            print("Brak penalties:", p)
-            continue
-        att[aname] = _mime_png(p)
-        lines.append(f"![{p.stem}](attachment:{aname})\n")
-    lines.append(
-        "\n"
-        "Końcowe wykresy są coraz bardziej wypłaszczone — poniżej bardzo późna faza treningu.\n"
-    )
+
     if att:
         set_md_attachments(5, att, lines)
     else:
-        print("Pominięto cell 5 — brak plików w greedy_rollout_corner_b")
+        print("Pominięto cell 5 — brak plików w greedy_rollout_corner_b / plots")
 
     # --- cell 6: corner_c ---
     ps = _first_existing(
