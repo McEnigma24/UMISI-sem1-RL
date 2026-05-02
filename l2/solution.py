@@ -654,10 +654,6 @@ def cmd_compare_push_and_is(
     print(f"Wykres: {png_path}")
 
 
-def _push_bias_column_name(p: float) -> str:
-    return f"push_p{int(round(float(p) * 100))}"
-
-
 def cmd_push_bias_sweep(
     *,
     corner: str = "corner_c",
@@ -671,7 +667,9 @@ def cmd_push_bias_sweep(
     window: int = 100,
     roll_window: int = 100,
 ) -> None:
-    """Ta sama liczba epizodów dla ε-greedy (opcjonalnie) i push z różnym ``push_forward_bias``."""
+    """Dla każdego ``push_forward_bias``: trening push z IS oraz bez IS; opcjonalnie ε-greedy + IS."""
+    import utils as utils_module
+
     for p in biases:
         if not 0.0 <= float(p) <= 1.0:
             raise ValueError(f"push_forward_bias poza [0,1]: {p}")
@@ -702,32 +700,33 @@ def cmd_push_bias_sweep(
         )
 
     for p in biases:
-        col = _push_bias_column_name(p)
-        _, pen = train_off_policy(
-            corner,
-            episodes,
-            step_size=step_size,
-            step_no=step_no,
-            experiment_rate=experiment_rate,
-            discount=discount,
-            use_importance_sampling=True,
-            behavior_mode="push_forward",
-            push_forward_bias=float(p),
-            enable_drawing=False,
-            show_episode_progress=True,
-        )
-        penalties_by_name[col] = pen
-        summary_rows.append(
-            {
-                "name": col,
-                "mean_penalty_last_window": mean_last_window(pen, window),
-            }
-        )
+        pct = int(round(float(p) * 100))
+        for use_is, suffix in ((True, "is"), (False, "nois")):
+            col = f"push_p{pct}_{suffix}"
+            _, pen = train_off_policy(
+                corner,
+                episodes,
+                step_size=step_size,
+                step_no=step_no,
+                experiment_rate=experiment_rate,
+                discount=discount,
+                use_importance_sampling=use_is,
+                behavior_mode="push_forward",
+                push_forward_bias=float(p),
+                enable_drawing=False,
+                show_episode_progress=True,
+            )
+            penalties_by_name[col] = pen
+            summary_rows.append(
+                {
+                    "name": col,
+                    "mean_penalty_last_window": mean_last_window(pen, window),
+                }
+            )
 
     os.makedirs(PLOTS_DIR, exist_ok=True)
     summary_path = os.path.join(PLOTS_DIR, "push_bias_sweep_summary.csv")
     series_path = os.path.join(PLOTS_DIR, "push_bias_sweep_series.csv")
-    png_path = os.path.join(PLOTS_DIR, "push_bias_sweep.png")
 
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["name", "mean_penalty_last_window"])
@@ -736,23 +735,7 @@ def cmd_push_bias_sweep(
     print(f"Zapisano {summary_path}")
 
     ep_count = len(next(iter(penalties_by_name.values())))
-    keys_all = list(penalties_by_name.keys())
-    if "epsilon_is" in keys_all:
-        keys_all.remove("epsilon_is")
-        push_sorted = sorted(
-            [k for k in keys_all if k.startswith("push_p")],
-            key=lambda x: int(x.replace("push_p", "")),
-        )
-        rest = [k for k in keys_all if not k.startswith("push_p")]
-        ordered_keys = ["epsilon_is"] + push_sorted + rest
-    else:
-        push_sorted = sorted(
-            [k for k in keys_all if k.startswith("push_p")],
-            key=lambda x: int(x.replace("push_p", "")),
-        )
-        rest = [k for k in keys_all if not k.startswith("push_p")]
-        ordered_keys = push_sorted + rest
-
+    ordered_keys = utils_module.order_learning_series_columns(list(penalties_by_name.keys()))
     fieldnames = ["episode"] + ordered_keys
 
     with open(series_path, "w", newline="", encoding="utf-8") as f:
@@ -765,10 +748,11 @@ def cmd_push_bias_sweep(
             sw.writerow(row)
     print(f"Zapisano {series_path}")
 
-    import utils as utils_module
-
-    utils_module.plot_learning_series_csv(series_path, png_path, roll_window=roll_window)
-    print(f"Wykres: {png_path}")
+    paths = utils_module.render_push_bias_sweep_plots(
+        series_path, plots_dir=PLOTS_DIR, roll_window=roll_window
+    )
+    for pth in paths:
+        print(f"Wykres: {pth}")
 
 
 def main() -> None:
@@ -892,7 +876,10 @@ def main() -> None:
         type=str,
         default="0.1,0.2,0.3",
         metavar="LIST",
-        help='push_bias_sweep: lista wag push_forward_bias, np. "0.1,0.2,0.3".',
+        help=(
+            'push_bias_sweep: lista wag push_forward_bias; dla każdej uruchamiane są '
+            'dwa treningi (IS oraz bez IS). Np. "0.1,0.2,0.3".'
+        ),
     )
     parser.add_argument(
         "--sweep-no-baseline",
@@ -1020,11 +1007,11 @@ def main() -> None:
         import utils as utils_module
 
         series_path = os.path.join(PLOTS_DIR, "push_bias_sweep_series.csv")
-        png_path = os.path.join(PLOTS_DIR, "push_bias_sweep.png")
-        utils_module.plot_learning_series_csv(
-            series_path, png_path, roll_window=args.compare_roll_window
+        paths = utils_module.render_push_bias_sweep_plots(
+            series_path, plots_dir=PLOTS_DIR, roll_window=args.compare_roll_window
         )
-        print(f"Wykres: {png_path}")
+        for pth in paths:
+            print(f"Wykres: {pth}")
         return
 
 

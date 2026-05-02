@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import csv
+import os
+import re
 from collections import defaultdict
 
 from matplotlib import pyplot as plt
@@ -225,20 +227,52 @@ def plot_compare_behavior_is(
     plt.close(fig)
 
 
-def _ordered_series_columns(fieldnames: list[str]) -> list[str]:
-    cols = [c for c in fieldnames if c != "episode"]
-    eps_cols = [c for c in cols if c == "epsilon_is"]
-    push_cols = sorted(
-        [c for c in cols if c.startswith("push_p")],
-        key=lambda x: int(x.replace("push_p", "") or "0"),
-    )
-    rest = [c for c in cols if c not in eps_cols and c not in push_cols]
-    return eps_cols + push_cols + rest
+def order_learning_series_columns(fieldnames: list[str]) -> list[str]:
+    """Kolejność serii: ``epsilon_is``, potem pary ``push_p{n}_is`` / ``push_p{n}_nois``, na końcu pozostałe."""
+    cols = [c for c in fieldnames if c and c != "episode"]
+    out: list[str] = []
+    seen: set[str] = set()
+    if "epsilon_is" in cols:
+        out.append("epsilon_is")
+        seen.add("epsilon_is")
+    pcts: set[int] = set()
+    for c in cols:
+        m = re.fullmatch(r"push_p(\d+)_(is|nois)", c)
+        if m:
+            pcts.add(int(m.group(1)))
+    for pct in sorted(pcts):
+        for suffix in ("is", "nois"):
+            name = f"push_p{pct}_{suffix}"
+            if name in cols:
+                out.append(name)
+                seen.add(name)
+    for c in cols:
+        if c not in seen:
+            out.append(c)
+            seen.add(c)
+    return out
+
+
+def iter_push_bias_pct_pairs(fieldnames: list[str]) -> list[int]:
+    """Procenty ``p``, dla których są obie kolumny IS i bez IS."""
+    cols = set(fieldnames)
+    pcts: set[int] = set()
+    for c in fieldnames:
+        m = re.fullmatch(r"push_p(\d+)_(is|nois)", c)
+        if m:
+            pcts.add(int(m.group(1)))
+    return [pct for pct in sorted(pcts) if f"push_p{pct}_is" in cols and f"push_p{pct}_nois" in cols]
 
 
 def _label_learning_series_column(col: str) -> str:
     if col == "epsilon_is":
         return r"$\varepsilon$-greedy + IS"
+    m = re.fullmatch(r"push_p(\d+)_(is|nois)", col)
+    if m:
+        pct = int(m.group(1))
+        if m.group(2) == "is":
+            return f"push $p={pct}\\%$, IS"
+        return f"push $p={pct}\\%$, bez IS"
     if col.startswith("push_p"):
         pct = col.removeprefix("push_p")
         try:
@@ -259,7 +293,7 @@ def plot_learning_series_csv(
     series: dict[str, list[float]] = {}
     with open(series_csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
-        cols = _ordered_series_columns(list(r.fieldnames or []))
+        cols = order_learning_series_columns(list(r.fieldnames or []))
         for row in r:
             episodes.append(int(row["episode"]))
             for name in cols:
@@ -305,3 +339,81 @@ def plot_learning_series_csv(
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+
+def plot_push_bias_is_pair(
+    series_csv_path: str,
+    out_path: str,
+    *,
+    pct: int,
+    roll_window: int = 100,
+) -> None:
+    """Jeden wykres: push przy danym ``p`` — IS vs bez IS (średnia krocząca kar epizodowych)."""
+    col_is = f"push_p{pct}_is"
+    col_no = f"push_p{pct}_nois"
+    episodes: list[int] = []
+    s_is: list[float] = []
+    s_no: list[float] = []
+    with open(series_csv_path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        fn = list(r.fieldnames or [])
+        if col_is not in fn or col_no not in fn:
+            raise ValueError(f"Brak kolumn {col_is} / {col_no} w {series_csv_path}")
+        for row in r:
+            episodes.append(int(row["episode"]))
+            s_is.append(float(row[col_is]))
+            s_no.append(float(row[col_no]))
+
+    if not episodes:
+        raise ValueError(f"Brak danych w {series_csv_path}")
+
+    w = max(1, min(roll_window, len(episodes)))
+
+    def rolling_mean(vals: list[float]) -> list[float]:
+        out: list[float] = []
+        for i in range(len(vals)):
+            lo = max(0, i - w + 1)
+            chunk = vals[lo : i + 1]
+            out.append(float(np.mean(chunk)))
+        return out
+
+    y_is = rolling_mean(s_is)
+    y_no = rolling_mean(s_no)
+
+    fig, ax = plt.subplots(figsize=(9.0, 4.8))
+    fig.patch.set_facecolor("white")
+    ax.plot(episodes, y_is, color="#1f77b4", linewidth=2.0, label=_label_learning_series_column(col_is))
+    ax.plot(episodes, y_no, color="#d62728", linewidth=2.0, label=_label_learning_series_column(col_no))
+    ax.set_xlabel("epizod", fontsize=11)
+    ax.set_ylabel(f"średnia kara (okno {w})", fontsize=11)
+    ax.set_title(f"Push $p={pct}\\%$: IS vs bez IS", fontsize=12)
+    ax.legend(loc="best", fontsize=10, framealpha=0.92)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(True, axis="y", alpha=0.28, linestyle="-", linewidth=0.8)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
+def render_push_bias_sweep_plots(
+    series_csv_path: str,
+    *,
+    plots_dir: str,
+    roll_window: int = 100,
+) -> list[str]:
+    """``push_bias_sweep.png`` (wszystkie serie) oraz ``push_bias_sweep_p{{n}}_is_vs_nois.png`` dla każdego p."""
+    out_paths: list[str] = []
+    combined = os.path.join(plots_dir, "push_bias_sweep.png")
+    plot_learning_series_csv(series_csv_path, combined, roll_window=roll_window)
+    out_paths.append(combined)
+
+    with open(series_csv_path, newline="", encoding="utf-8") as f:
+        fieldnames = list(csv.DictReader(f).fieldnames or [])
+
+    for pct in iter_push_bias_pct_pairs(fieldnames):
+        pair_png = os.path.join(plots_dir, f"push_bias_sweep_p{pct}_is_vs_nois.png")
+        plot_push_bias_is_pair(series_csv_path, pair_png, pct=pct, roll_window=roll_window)
+        out_paths.append(pair_png)
+
+    return out_paths
