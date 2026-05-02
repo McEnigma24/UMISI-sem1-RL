@@ -465,20 +465,20 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
 
     window = 100
 
-    # n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+    episodes = 600
+    n_list = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+    alphas = [round(i * 0.1, 1) for i in range(11)]
 
     # episodes = 1000
     # episodes = 450
     # episodes = 300
 
 
-    episodes = 600
     n_list = [1, 2, 4, 8, 16]
 
     # episodes = 600
     # n_list = [32, 64, 128]
 
-    # alphas = [round(i * 0.1, 1) for i in range(11)]
     # alphas = [0.1]
 
 
