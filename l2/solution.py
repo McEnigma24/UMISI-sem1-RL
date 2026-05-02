@@ -472,8 +472,8 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     # episodes = 300
 
 
-    # episodes = 600
-    # n_list = [1, 2, 4, 8, 16]
+    episodes = 600
+    n_list = [1, 2, 4, 8, 16]
 
     # episodes = 600
     # n_list = [32, 64, 128]
@@ -482,10 +482,10 @@ def cmd_param_study(*, episode_step_progress: bool = False, jobs: int = 1) -> No
     # alphas = [0.1]
 
 
-    corner = "corner_d"
-    episodes = 600
-    alphas = [0.5]
-    n_list = [4]
+    # corner = "corner_d"
+    # episodes = 600
+    # alphas = [0.5]
+    # n_list = [4]
 
 
 
@@ -756,8 +756,8 @@ def main() -> None:
         train_off_policy(
             "corner_d",
             40000,
-            step_size=0.3,
-            step_no=5,
+            step_size=0.5,        # alpha
+            step_no=4,            # sarsa-n
             experiment_rate=0.05,
             discount=1.0,
         )
