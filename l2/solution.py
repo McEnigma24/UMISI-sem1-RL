@@ -666,9 +666,12 @@ def cmd_push_bias_sweep(
     include_epsilon_baseline: bool = True,
     window: int = 100,
     roll_window: int = 100,
+    output_dir: str | None = None,
 ) -> None:
     """Dla każdego ``push_forward_bias``: trening push z IS oraz bez IS; opcjonalnie ε-greedy + IS."""
     import utils as utils_module
+
+    out_root = output_dir if output_dir is not None else PLOTS_DIR
 
     for p in biases:
         if not 0.0 <= float(p) <= 1.0:
@@ -724,9 +727,9 @@ def cmd_push_bias_sweep(
                 }
             )
 
-    os.makedirs(PLOTS_DIR, exist_ok=True)
-    summary_path = os.path.join(PLOTS_DIR, "push_bias_sweep_summary.csv")
-    series_path = os.path.join(PLOTS_DIR, "push_bias_sweep_series.csv")
+    os.makedirs(out_root, exist_ok=True)
+    summary_path = os.path.join(out_root, "push_bias_sweep_summary.csv")
+    series_path = os.path.join(out_root, "push_bias_sweep_series.csv")
 
     with open(summary_path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["name", "mean_penalty_last_window"])
@@ -749,7 +752,7 @@ def cmd_push_bias_sweep(
     print(f"Zapisano {series_path}")
 
     paths = utils_module.render_push_bias_sweep_plots(
-        series_path, plots_dir=PLOTS_DIR, roll_window=roll_window
+        series_path, plots_dir=out_root, roll_window=roll_window
     )
     for pth in paths:
         print(f"Wykres: {pth}")
@@ -886,6 +889,13 @@ def main() -> None:
         action="store_true",
         help="push_bias_sweep: nie uruchamiaj referencyjnego ε-greedy + IS (tylko krzywe push).",
     )
+    parser.add_argument(
+        "--sweep-output-dir",
+        type=str,
+        default=None,
+        metavar="DIR",
+        help="push_bias_sweep / push_bias_sweep_plot: katalog na CSV serie i PNG (domyślnie plots).",
+    )
     args = parser.parse_args()
 
     if args.mode == "random":
@@ -1000,15 +1010,17 @@ def main() -> None:
             include_epsilon_baseline=not args.sweep_no_baseline,
             window=args.compare_window,
             roll_window=args.compare_roll_window,
+            output_dir=args.sweep_output_dir,
         )
         return
 
     if args.mode == "push_bias_sweep_plot":
         import utils as utils_module
 
-        series_path = os.path.join(PLOTS_DIR, "push_bias_sweep_series.csv")
+        out_root = args.sweep_output_dir if args.sweep_output_dir is not None else PLOTS_DIR
+        series_path = os.path.join(out_root, "push_bias_sweep_series.csv")
         paths = utils_module.render_push_bias_sweep_plots(
-            series_path, plots_dir=PLOTS_DIR, roll_window=args.compare_roll_window
+            series_path, plots_dir=out_root, roll_window=args.compare_roll_window
         )
         for pth in paths:
             print(f"Wykres: {pth}")

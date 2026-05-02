@@ -264,6 +264,64 @@ def iter_push_bias_pct_pairs(fieldnames: list[str]) -> list[int]:
     return [pct for pct in sorted(pcts) if f"push_p{pct}_is" in cols and f"push_p{pct}_nois" in cols]
 
 
+def iter_push_bias_pcts(fieldnames: list[str]) -> list[int]:
+    """Wszystkie ``p`` występujące w kolumnach sweep."""
+    pcts: set[int] = set()
+    for c in fieldnames:
+        m = re.fullmatch(r"push_p(\d+)_(is|nois)", c)
+        if m:
+            pcts.add(int(m.group(1)))
+    return sorted(pcts)
+
+
+# Baseline oraz pary (IS = jaśniejszy, bez IS = ciemniejszy) w tej samej rodzinie barw.
+PUSH_SWEEP_BASELINE_COLOR = "#2ca02c"
+_PUSH_P_COLORS: dict[int, tuple[str, str]] = {
+    10: ("#6baed6", "#08519c"),
+    20: ("#fdae6b", "#b35806"),
+    30: ("#bfbbd9", "#54278f"),
+}
+
+
+def push_pair_colors_for_pct(pct: int) -> tuple[str, str]:
+    """Zwraca (kolor IS jaśniejszy, kolor bez IS ciemniejszy)."""
+    if pct in _PUSH_P_COLORS:
+        return _PUSH_P_COLORS[pct]
+    return ("#bdbdbd", "#404040")
+
+
+def push_sweep_series_color(col: str) -> str:
+    if col == "epsilon_is":
+        return PUSH_SWEEP_BASELINE_COLOR
+    m = re.fullmatch(r"push_p(\d+)_(is|nois)", col)
+    if m:
+        pct = int(m.group(1))
+        light, dark = push_pair_colors_for_pct(pct)
+        return light if m.group(2) == "is" else dark
+    return "#636363"
+
+
+def order_push_sweep_columns_grouped_is_then_nois(fieldnames: list[str]) -> list[str]:
+    """Kolejność na wykresie „wszystko”: baseline, potem wszystkie IS, potem wszystkie bez IS."""
+    cols = [c for c in fieldnames if c and c != "episode"]
+    fn = set(cols)
+    out: list[str] = []
+    if "epsilon_is" in fn:
+        out.append("epsilon_is")
+    for pct in iter_push_bias_pcts(fieldnames):
+        key = f"push_p{pct}_is"
+        if key in fn:
+            out.append(key)
+    for pct in iter_push_bias_pcts(fieldnames):
+        key = f"push_p{pct}_nois"
+        if key in fn:
+            out.append(key)
+    for c in cols:
+        if c not in out:
+            out.append(c)
+    return out
+
+
 def _label_learning_series_column(col: str) -> str:
     if col == "epsilon_is":
         return r"$\varepsilon$-greedy + IS"
@@ -287,13 +345,20 @@ def plot_learning_series_csv(
     out_path: str,
     *,
     roll_window: int = 100,
+    columns: list[str] | None = None,
+    title: str | None = None,
+    figsize: tuple[float, float] = (10.0, 5.2),
 ) -> None:
-    """Średnia krocząca kary — wszystkie kolumny poza ``episode`` (np. sweep wag push)."""
+    """Średnia krocząca kar epizodowych; ``columns`` opcjonalnie ogranicza serie (kolejność na legendzie)."""
     episodes: list[int] = []
     series: dict[str, list[float]] = {}
     with open(series_csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
-        cols = order_learning_series_columns(list(r.fieldnames or []))
+        fnames = list(r.fieldnames or [])
+        if columns is None:
+            cols = order_learning_series_columns(fnames)
+        else:
+            cols = [c for c in columns if c in fnames and c != "episode"]
         for row in r:
             episodes.append(int(row["episode"]))
             for name in cols:
@@ -304,7 +369,7 @@ def plot_learning_series_csv(
     if not episodes or not series:
         raise ValueError(f"Brak serii w {series_csv_path}")
 
-    fig, ax = plt.subplots(figsize=(10.0, 5.2))
+    fig, ax = plt.subplots(figsize=figsize)
     fig.patch.set_facecolor("white")
 
     w = max(1, min(roll_window, len(episodes)))
@@ -317,21 +382,22 @@ def plot_learning_series_csv(
             out.append(float(np.mean(chunk)))
         return out
 
-    cmap = plt.cm.tab10.colors
-    for i, key in enumerate(cols):
+    for key in cols:
         if key not in series:
             continue
         ys = rolling_mean(series[key])
         ax.plot(
             episodes,
             ys,
-            color=cmap[i % len(cmap)],
-            linewidth=1.85,
+            color=push_sweep_series_color(key),
+            linewidth=1.9,
             label=_label_learning_series_column(key),
         )
 
     ax.set_xlabel("epizod", fontsize=11)
     ax.set_ylabel(f"średnia kara (okno {w})", fontsize=11)
+    if title:
+        ax.set_title(title, fontsize=12)
     ax.legend(loc="best", fontsize=10, framealpha=0.92)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
@@ -347,22 +413,28 @@ def plot_push_bias_is_pair(
     *,
     pct: int,
     roll_window: int = 100,
+    include_baseline: bool = True,
 ) -> None:
-    """Jeden wykres: push przy danym ``p`` — IS vs bez IS (średnia krocząca kar epizodowych)."""
+    """IS vs bez IS dla jednego ``p``; opcjonalnie zielony baseline ε-greedy + IS."""
     col_is = f"push_p{pct}_is"
     col_no = f"push_p{pct}_nois"
     episodes: list[int] = []
     s_is: list[float] = []
     s_no: list[float] = []
+    s_eps: list[float] | None = None
     with open(series_csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
         fn = list(r.fieldnames or [])
         if col_is not in fn or col_no not in fn:
             raise ValueError(f"Brak kolumn {col_is} / {col_no} w {series_csv_path}")
+        if include_baseline and "epsilon_is" in fn:
+            s_eps = []
         for row in r:
             episodes.append(int(row["episode"]))
             s_is.append(float(row[col_is]))
             s_no.append(float(row[col_no]))
+            if s_eps is not None:
+                s_eps.append(float(row["epsilon_is"]))
 
     if not episodes:
         raise ValueError(f"Brak danych w {series_csv_path}")
@@ -379,11 +451,23 @@ def plot_push_bias_is_pair(
 
     y_is = rolling_mean(s_is)
     y_no = rolling_mean(s_no)
+    c_light, c_dark = push_pair_colors_for_pct(pct)
 
     fig, ax = plt.subplots(figsize=(9.0, 4.8))
     fig.patch.set_facecolor("white")
-    ax.plot(episodes, y_is, color="#1f77b4", linewidth=2.0, label=_label_learning_series_column(col_is))
-    ax.plot(episodes, y_no, color="#d62728", linewidth=2.0, label=_label_learning_series_column(col_no))
+    if s_eps is not None:
+        y_eps = rolling_mean(s_eps)
+        ax.plot(
+            episodes,
+            y_eps,
+            color=PUSH_SWEEP_BASELINE_COLOR,
+            linewidth=2.0,
+            linestyle="--",
+            label=_label_learning_series_column("epsilon_is"),
+            alpha=0.95,
+        )
+    ax.plot(episodes, y_is, color=c_light, linewidth=2.0, label=_label_learning_series_column(col_is))
+    ax.plot(episodes, y_no, color=c_dark, linewidth=2.0, label=_label_learning_series_column(col_no))
     ax.set_xlabel("epizod", fontsize=11)
     ax.set_ylabel(f"średnia kara (okno {w})", fontsize=11)
     ax.set_title(f"Push $p={pct}\\%$: IS vs bez IS", fontsize=12)
@@ -402,14 +486,65 @@ def render_push_bias_sweep_plots(
     plots_dir: str,
     roll_window: int = 100,
 ) -> list[str]:
-    """``push_bias_sweep.png`` (wszystkie serie) oraz ``push_bias_sweep_p{{n}}_is_vs_nois.png`` dla każdego p."""
+    """Wykresy sweep: najpierw panel sam IS (+baseline), potem sam bez IS, potem pełny (IS, potem bez IS), na końcu pary p."""
     out_paths: list[str] = []
-    combined = os.path.join(plots_dir, "push_bias_sweep.png")
-    plot_learning_series_csv(series_csv_path, combined, roll_window=roll_window)
-    out_paths.append(combined)
 
     with open(series_csv_path, newline="", encoding="utf-8") as f:
         fieldnames = list(csv.DictReader(f).fieldnames or [])
+
+    fn = set(fieldnames)
+    pcts = iter_push_bias_pcts(fieldnames)
+
+    cols_all_is: list[str] = []
+    if "epsilon_is" in fn:
+        cols_all_is.append("epsilon_is")
+    for pct in pcts:
+        k = f"push_p{pct}_is"
+        if k in fn:
+            cols_all_is.append(k)
+
+    cols_all_nois: list[str] = []
+    if "epsilon_is" in fn:
+        cols_all_nois.append("epsilon_is")
+    for pct in pcts:
+        k = f"push_p{pct}_nois"
+        if k in fn:
+            cols_all_nois.append(k)
+
+    grouped = order_push_sweep_columns_grouped_is_then_nois(fieldnames)
+
+    path_is = os.path.join(plots_dir, "push_bias_sweep_all_is.png")
+    plot_learning_series_csv(
+        series_csv_path,
+        path_is,
+        roll_window=roll_window,
+        columns=cols_all_is,
+        title="Push: warianty z importance sampling (+ baseline)",
+        figsize=(10.0, 5.2),
+    )
+    out_paths.append(path_is)
+
+    path_nois = os.path.join(plots_dir, "push_bias_sweep_all_nois.png")
+    plot_learning_series_csv(
+        series_csv_path,
+        path_nois,
+        roll_window=roll_window,
+        columns=cols_all_nois,
+        title="Push: warianty bez importance sampling (+ baseline)",
+        figsize=(10.0, 5.2),
+    )
+    out_paths.append(path_nois)
+
+    combined = os.path.join(plots_dir, "push_bias_sweep.png")
+    plot_learning_series_csv(
+        series_csv_path,
+        combined,
+        roll_window=roll_window,
+        columns=grouped,
+        title="Pełne porównanie (IS, potem bez IS)",
+        figsize=(11.0, 5.5),
+    )
+    out_paths.append(combined)
 
     for pct in iter_push_bias_pct_pairs(fieldnames):
         pair_png = os.path.join(plots_dir, f"push_bias_sweep_p{pct}_is_vs_nois.png")
