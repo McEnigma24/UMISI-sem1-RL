@@ -154,3 +154,154 @@ def plot_param_study_n_alpha(
     fig.tight_layout()
     fig.savefig(out_path, dpi=220, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+
+def plot_compare_behavior_is(
+    series_csv_path: str,
+    out_path: str,
+    *,
+    roll_window: int = 50,
+) -> None:
+    """Krzywe uczenia: średnia krocząca kary po epizodach dla compare_push_is."""
+    episodes: list[int] = []
+    series: dict[str, list[float]] = {}
+    with open(series_csv_path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        fieldnames = [fn for fn in (r.fieldnames or []) if fn != "episode"]
+        for row in r:
+            episodes.append(int(row["episode"]))
+            for name in fieldnames:
+                if name not in series:
+                    series[name] = []
+                series[name].append(float(row[name]))
+
+    if not episodes:
+        raise ValueError(f"Brak danych w {series_csv_path}")
+
+    labels = {
+        "epsilon_is": r"$\varepsilon$-greedy + IS",
+        "push_is": r"push + IS",
+        "push_no_is": r"push, bez IS",
+    }
+    colors = {
+        "epsilon_is": "#1f77b4",
+        "push_is": "#d62728",
+        "push_no_is": "#9467bd",
+    }
+
+    fig, ax = plt.subplots(figsize=(9.5, 5.0))
+    fig.patch.set_facecolor("white")
+
+    w = max(1, min(roll_window, len(episodes)))
+
+    def rolling_mean(vals: list[float]) -> list[float]:
+        out: list[float] = []
+        for i in range(len(vals)):
+            lo = max(0, i - w + 1)
+            chunk = vals[lo : i + 1]
+            out.append(float(np.mean(chunk)))
+        return out
+
+    for key in ("epsilon_is", "push_is", "push_no_is"):
+        if key not in series:
+            continue
+        ys = rolling_mean(series[key])
+        ax.plot(
+            episodes,
+            ys,
+            color=colors.get(key, "#333333"),
+            linewidth=1.8,
+            label=labels.get(key, key),
+        )
+
+    ax.set_xlabel("epizod", fontsize=11)
+    ax.set_ylabel(f"średnia kara (okno {w})", fontsize=11)
+    ax.legend(loc="best", fontsize=10, framealpha=0.92)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(True, axis="y", alpha=0.28, linestyle="-", linewidth=0.8)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
+def _ordered_series_columns(fieldnames: list[str]) -> list[str]:
+    cols = [c for c in fieldnames if c != "episode"]
+    eps_cols = [c for c in cols if c == "epsilon_is"]
+    push_cols = sorted(
+        [c for c in cols if c.startswith("push_p")],
+        key=lambda x: int(x.replace("push_p", "") or "0"),
+    )
+    rest = [c for c in cols if c not in eps_cols and c not in push_cols]
+    return eps_cols + push_cols + rest
+
+
+def _label_learning_series_column(col: str) -> str:
+    if col == "epsilon_is":
+        return r"$\varepsilon$-greedy + IS"
+    if col.startswith("push_p"):
+        pct = col.removeprefix("push_p")
+        try:
+            return f"push $p={int(pct)}\\%$"
+        except ValueError:
+            return col
+    return col
+
+
+def plot_learning_series_csv(
+    series_csv_path: str,
+    out_path: str,
+    *,
+    roll_window: int = 100,
+) -> None:
+    """Średnia krocząca kary — wszystkie kolumny poza ``episode`` (np. sweep wag push)."""
+    episodes: list[int] = []
+    series: dict[str, list[float]] = {}
+    with open(series_csv_path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        cols = _ordered_series_columns(list(r.fieldnames or []))
+        for row in r:
+            episodes.append(int(row["episode"]))
+            for name in cols:
+                if name not in series:
+                    series[name] = []
+                series[name].append(float(row[name]))
+
+    if not episodes or not series:
+        raise ValueError(f"Brak serii w {series_csv_path}")
+
+    fig, ax = plt.subplots(figsize=(10.0, 5.2))
+    fig.patch.set_facecolor("white")
+
+    w = max(1, min(roll_window, len(episodes)))
+
+    def rolling_mean(vals: list[float]) -> list[float]:
+        out: list[float] = []
+        for i in range(len(vals)):
+            lo = max(0, i - w + 1)
+            chunk = vals[lo : i + 1]
+            out.append(float(np.mean(chunk)))
+        return out
+
+    cmap = plt.cm.tab10.colors
+    for i, key in enumerate(cols):
+        if key not in series:
+            continue
+        ys = rolling_mean(series[key])
+        ax.plot(
+            episodes,
+            ys,
+            color=cmap[i % len(cmap)],
+            linewidth=1.85,
+            label=_label_learning_series_column(key),
+        )
+
+    ax.set_xlabel("epizod", fontsize=11)
+    ax.set_ylabel(f"średnia kara (okno {w})", fontsize=11)
+    ax.legend(loc="best", fontsize=10, framealpha=0.92)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(True, axis="y", alpha=0.28, linestyle="-", linewidth=0.8)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
