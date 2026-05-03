@@ -40,6 +40,7 @@ import keras
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 from tqdm import tqdm
 
 matplotlib.use("Agg")
@@ -307,6 +308,15 @@ def train(env_name: str = "cartpole", resume_path: str | None = None) -> None:
         if DEVICE == "cuda":
             agent.model = agent.model.to(DEVICE)
 
+    start_ep = 0
+    if resume_path:
+        match = re.search(r'ep(\d+)\.keras', resume_path)
+        if match:
+            start_ep = int(match.group(1)) + 1
+            print(f"Rozpoczynanie od epizodu {start_ep}")
+        else:
+            print("Ostrzezenie: Nie mozna sparsowac numeru epizodu z resume_path, rozpoczynanie od 0")
+
     agent.model.summary()
 
     past_rewards: list[float] = []
@@ -319,7 +329,7 @@ def train(env_name: str = "cartpole", resume_path: str | None = None) -> None:
     SAVE_EVERY = cfg["save_every"]
     PLOT_DIR   = cfg["plot_dir"]
 
-    for ep in tqdm(range(N_EPISODES), desc=f"{cfg['gym_id']} trening"):
+    for ep in tqdm(range(start_ep, N_EPISODES), desc=f"{cfg['gym_id']} trening"):
         state, _ = env.reset()
         done = False
         reward_sum = 0.0

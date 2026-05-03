@@ -6,6 +6,6 @@ cls
 
 
 $env:KERAS_BACKEND = "torch"
-python solution.py --env cartpole
+python solution.py --env cartpole --resume cartpole_checkpoint_ep1100.keras
 
 # py -3.13
