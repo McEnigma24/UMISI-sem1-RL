@@ -5,6 +5,5 @@ matplotlib==3.10.8
 numpy==1.26.4
 tqdm==4.67.3
 swig==4.4.1
-box2d-py
 pygame==2.6.1
 torch==2.6.0

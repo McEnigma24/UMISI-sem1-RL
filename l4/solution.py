@@ -113,7 +113,7 @@ def build_actor_critic(
     x = keras.layers.Dense(hidden[1], activation="tanh", name="fc2")(x)
 
     logits = keras.layers.Dense(n_actions, name="logits")(x)
-    value  = keras.layers.Dense(1,         name="value")(x)
+    value = keras.layers.Dense(1, name="value")(x)
 
     return keras.Model(inputs=obs, outputs=[logits, value], name="ActorCritic")
 
@@ -127,7 +127,18 @@ def build_actor_critic_separate(
     Actor-Critic z NIEZALEZNYMI trzonkami — brak wspoldzielonych wag.
     Kazda glowica ma wlasne dwie warstwy ukryte (dwa razy wiecej parametrow).
     """
-    raise NotImplementedError("TODO: zaimplementuj rozlaczne trzonki aktora i krytyka!")
+    # TODO: zaimplementuj rozlaczne trzonki aktora i krytyka!
+    obs = keras.Input(shape=(obs_dim,), name="obs")
+
+    xa = keras.layers.Dense(hidden[0], activation="tanh", name="actor_fc1")(obs)
+    xa = keras.layers.Dense(hidden[1], activation="tanh", name="actor_fc2")(xa)
+    logits = keras.layers.Dense(n_actions, name="logits")(xa)
+
+    xc = keras.layers.Dense(hidden[0], activation="tanh", name="critic_fc1")(obs)
+    xc = keras.layers.Dense(hidden[1], activation="tanh", name="critic_fc2")(xc)
+    value = keras.layers.Dense(1, name="value")(xc)
+
+    return keras.Model(inputs=obs, outputs=[logits, value], name="ActorCriticSeparate")
 
 
 class ActorCriticController:
@@ -165,16 +176,18 @@ class ActorCriticController:
 
         # TODO: wywolaj model (tryb inferencji) i pobierz logity
         # Podpowiedz: self.model(x, training=False) zwraca..?
-        logits = None
+        logits, _ = self.model(x, training=False)
 
         # TODO: oblicz prawdopodobienstwa akcji za pomoca softmax na logitach
         # Podpowiedz: może pomogą keras.ops..?
-        probs = None
+        probs = keras.ops.softmax(logits, axis=-1)
 
-        # TODO: przekonwertuj prawdopodobienstwa do numpy (przyda sie też metoda ravel i pomocnicze to_numpy), 
+        # TODO: przekonwertuj prawdopodobienstwa do numpy (przyda sie też metoda ravel i pomocnicze to_numpy),
         # znormalizuj dla bezpieczenstwa (podziel przez sume) i wylosuj akcje uzywajac np.random.choice
         # Podpowiedz: astype(np.float64) często ratuje sytuację...
-        action = 0
+        p_np = to_numpy(probs).ravel().astype(np.float64)
+        p_np /= p_np.sum()
+        action = int(np.random.choice(len(p_np), p=p_np))
 
         self.last_action = action
         return action
@@ -201,31 +214,39 @@ class ActorCriticController:
 
         # TODO: oblicz cel TD (target)
         # Podpowiedz: nie zapomnij o keras.ops.stop_gradient...
+        _, value_next = self.model(x_s_next, training=True)
+        v_next = value_next[0, 0]
         r = keras.ops.cast(reward, "float32")
-        target = r  # TODO: zastap poprawna formula
+        done = keras.ops.cast(terminal, "float32")
+        v_next_sg = keras.ops.stop_gradient(v_next)
+        target = r + self.gamma * (1.0 - done) * v_next_sg
 
         # TODO: oblicz blad TD (delta = target - V(s)) i zapisz jego kwadrat
         # do self.last_error_squared (przydatne do wykresow)
         # Podpowiedz: a tu się przyda keras.ops.square...
-        error = keras.ops.cast(0.0, "float32")  # TODO: zastap poprawna formula
-        self.last_error_squared = 0.0
+        error = target - v_s
+        self.last_error_squared = float(to_numpy(keras.ops.square(error)))
 
         # TODO: oblicz strate krytyka jako kwadrat bledu TD
-        critic_loss = keras.ops.cast(0.0, "float32")
+        critic_loss = keras.ops.square(error)
 
         # TODO: oblicz log-prawdopodobienstwa akcji (log-softmax)
         # Podpowiedz: log_probs = logits_s - keras.ops.logsumexp...
         # Nastepnie wybierz log-prawdopodobienstwo konkretnej wybranej akcji
-        log_prob_a = keras.ops.cast(0.0, "float32")
+        log_probs = logits_s - keras.ops.logsumexp(logits_s, axis=-1, keepdims=True)
+        a = keras.ops.cast(action, "int32")
+        log_prob_a = log_probs[0, a]
 
         # TODO: oblicz strate aktora (policy gradient)
         # Podpowiedz: tu tez sie przyda keras.ops.stop_gradient...
-        actor_loss = keras.ops.cast(0.0, "float32")
+        actor_loss = -keras.ops.stop_gradient(error) * log_prob_a
 
         # TODO: oblicz bonus z entropii
         # i mnoz przez -entropy_coeff (maksymalizacja entropii = minimalizacja -entropii)
         # Podpowiedz: log_probs zostalo juz obliczone powyzej...
-        entropy_loss = keras.ops.cast(0.0, "float32")
+        probs = keras.ops.softmax(logits_s, axis=-1)
+        entropy = -keras.ops.sum(probs * log_probs, axis=-1)
+        entropy_loss = -self.entropy_coeff * keras.ops.mean(entropy)
 
         return critic_loss + actor_loss + entropy_loss
 

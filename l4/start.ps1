@@ -1,6 +1,11 @@
 Set-Location $PSScriptRoot
 cls
 
-python solution.py
+# KERAS_BACKEND=torch;
+# py --3.12 solution.py --env cartpole
 
-# py -3.13 solution.py
+
+$env:KERAS_BACKEND = "torch"
+python solution.py --env cartpole
+
+# py -3.13
