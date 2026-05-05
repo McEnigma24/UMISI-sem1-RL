@@ -198,15 +198,16 @@ class ActorCriticController:
         state: np.ndarray,
         reward: float,
         new_state: np.ndarray,
-        terminal: bool,
+        terminated: bool,
     ) -> None:
         assert self.last_action is not None
         x_s = format_state(state)
         x_s_next = format_state(new_state)
-        grads = self.compute_grads(self.last_action, x_s, x_s_next, reward, terminal)
-        self.optimizer.apply(grads, self.model.trainable_variables)
+        grads = self.compute_grads(self.last_action, x_s, x_s_next, reward, terminated)
+        with torch.no_grad():
+            self.optimizer.apply(grads, self.model.trainable_variables)
 
-    def compute_loss(self, action, x_s, x_s_next, reward, terminal):
+    def compute_loss(self, action, x_s, x_s_next, reward, terminated):
         """
         Oblicza laczna strate: L = L_krytyk + L_aktor + L_entropia
         """
@@ -218,9 +219,11 @@ class ActorCriticController:
         _, value_next = self.model(x_s_next, training=True)
         v_next = value_next[0, 0]
         r = keras.ops.cast(reward, "float32")
-        done = keras.ops.cast(terminal, "float32")
+        # Bootstrap tylko przy prawdziwym koncu MDP (terminated). Przy truncated
+        # (np. limit czasu) nadal warto bootstrappowac z V(s') — inaczej sygnal TD jest obciety.
+        term_f = keras.ops.cast(terminated, "float32")
         v_next_sg = keras.ops.stop_gradient(v_next)
-        target = r + self.gamma * (1.0 - done) * v_next_sg
+        target = r + self.gamma * (1.0 - term_f) * v_next_sg
 
         # TODO: oblicz blad TD (delta = target - V(s)) i zapisz jego kwadrat
         # do self.last_error_squared (przydatne do wykresow)
@@ -236,7 +239,9 @@ class ActorCriticController:
         # Nastepnie wybierz log-prawdopodobienstwo konkretnej wybranej akcji
         log_probs = logits_s - keras.ops.logsumexp(logits_s, axis=-1, keepdims=True)
         a = keras.ops.cast(action, "int32")
-        log_prob_a = log_probs[0, a]
+        idx = keras.ops.reshape(a, (1, 1))
+        log_prob_a = keras.ops.take_along_axis(log_probs, idx, axis=-1)
+        log_prob_a = keras.ops.reshape(log_prob_a, ())
 
         # TODO: oblicz strate aktora (policy gradient)
         # Podpowiedz: tu tez sie przyda keras.ops.stop_gradient...
@@ -251,12 +256,12 @@ class ActorCriticController:
 
         return critic_loss + actor_loss + entropy_loss
 
-    def compute_grads(self, action, x_s, x_s_next, reward, terminal):
+    def compute_grads(self, action, x_s, x_s_next, reward, terminated):
         raw = [v.value for v in self.model.trainable_variables]
         for t in raw:
             if t.grad is not None:
                 t.grad.zero_()
-        loss = self.compute_loss(action, x_s, x_s_next, reward, terminal)
+        loss = self.compute_loss(action, x_s, x_s_next, reward, terminated)
         loss.backward()
         return [t.grad if t.grad is not None else torch.zeros_like(t) for t in raw]
 
@@ -341,7 +346,7 @@ def train(env_name: str = "cartpole", resume_path: str | None = None) -> None:
             done = terminated or truncated
 
             reward = float(reward)
-            agent.learn(state, reward, next_state, done)
+            agent.learn(state, reward, next_state, terminated)
 
             state = next_state
             reward_sum += reward
