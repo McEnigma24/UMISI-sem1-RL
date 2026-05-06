@@ -9,4 +9,9 @@ $env:KERAS_BACKEND = "torch"
 python solution.py --env cartpole
 # python solution.py --env cartpole --resume cartpole_checkpoint_ep1100.keras
 
+
+# Critic-Check #
+# python solution.py --env cartpole --check-critic cartpole_single_network\cartpole_final.keras
+
+
 # py -3.13

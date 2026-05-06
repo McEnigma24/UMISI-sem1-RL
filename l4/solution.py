@@ -17,6 +17,9 @@ Uruchomienie
   # Wznowienie treningu z checkpointu:
   KERAS_BACKEND=torch python solution.py --env lunar --resume sciezka/do/modelu.keras
 
+  # Test krytyka V(s) na recznie zdefiniowanych stanach:
+  KERAS_BACKEND=torch python solution.py --env cartpole --check-critic sciezka/do/modelu.keras
+
 
                                       ()
          ,
@@ -71,7 +74,8 @@ ENV_CONFIGS: dict[str, dict] = {
         "learning_rate":    1e-3,
         "discount_factor":  0.99,
         "entropy_coeff":    0.0,
-        "separate_trunks":  False,
+        # "separate_trunks":  False,
+        "separate_trunks":  True,
         "n_episodes":       2000,
         "solved_threshold": 475.0,
         "window":           100,
@@ -93,6 +97,26 @@ ENV_CONFIGS: dict[str, dict] = {
         "save_every":       50,
         "plot_dir":         "plots_lunar",
     },
+}
+
+# Recznie dobrane stany do sprawdzenia wartosciowania V(s) przez krytyka.
+# CartPole-v1: [pozycja_wozka, predkosc_wozka, kat_produ, predkosc_katowa_produ]
+# LunarLander: [x, y, vx, vy, kat, predkosc_katowa, kontakt_nogi_L, kontakt_nogi_P]
+CRITIC_PROBE_STATES: dict[str, list[tuple[str, np.ndarray]]] = {
+    "cartpole": [
+        ("pion, zerowe predkosci (srodek)", np.array([0.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("szybkie przechylenie (duza predkosc katowa)", np.array([0.0, 0.0, 0.15, 2.5], dtype=np.float32)),
+        ("wozek blisko prawej krawedzi (x ~ +2.35)", np.array([2.35, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("wozek blisko lewej krawedzi (x ~ -2.35)", np.array([-2.35, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("pochylony pret, spokojny wozek", np.array([0.0, 0.0, 0.12, 0.0], dtype=np.float32)),
+    ],
+    "lunar": [
+        ("nad srodkiem, stabilnie (wysoko, maly kat)", np.array([0.0, 1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("szybki obrot (duza predkosc katowa)", np.array([0.0, 1.0, 0.0, 0.0, 0.35, 2.5, 0.0, 0.0], dtype=np.float32)),
+        ("blisko lewej krawedzi ekranu (duze |x|)", np.array([-0.95, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("blisko prawej krawedzi ekranu (duze |x|)", np.array([0.95, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+        ("maly pion, szybki opad", np.array([0.0, 0.5, 0.0, -1.5, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+    ],
 }
 
 
@@ -266,6 +290,32 @@ class ActorCriticController:
         return [t.grad if t.grad is not None else torch.zeros_like(t) for t in raw]
 
 
+def check_critic(model_path: str, env_name: str = "cartpole") -> None:
+    """
+    Wypisuje V(s) (wyjscie 'value') dla stanow z CRITIC_PROBE_STATES[env_name].
+    """
+    cfg = ENV_CONFIGS[env_name]
+    probes = CRITIC_PROBE_STATES[env_name]
+    print(f"Test krytyka V(s)  |  srodowisko: {cfg['gym_id']}  |  model: {model_path}")
+    model = keras.saving.load_model(model_path)
+
+    obs_dim = int(model.input_shape[-1])
+    print(f"  oczekiwany wymiar obserwacji: {obs_dim}\n")
+
+    for label, state_vec in probes:
+        if state_vec.shape[0] != obs_dim:
+            raise ValueError(
+                f"Stan '{label}' ma wymiar {state_vec.shape[0]}, model oczekuje {obs_dim}"
+            )
+        x = format_state(state_vec)
+        _logits, value = model(x, training=False)
+        v = float(to_numpy(value).reshape(-1)[0])
+        state_str = np.array2string(state_vec, precision=4, separator=", ")
+        print(f"  [{label}]")
+        print(f"    s = {state_str}")
+        print(f"    V(s) = {v:.4f}\n")
+
+
 def render_model(model_path: str, env_name: str = "cartpole", n_episodes: int = 5) -> None:
     """Wczytuje checkpoint .keras i renderuje n_episodes z widokiem dla czlowieka."""
     cfg = ENV_CONFIGS[env_name]
@@ -395,8 +445,27 @@ def train(env_name: str = "cartpole", resume_path: str | None = None) -> None:
 @click.option("--env", type=click.Choice(["cartpole", "lunar"]), default="cartpole", show_default=True, help="Srodowisko do treningu.")
 @click.option("--render", metavar="MODEL.keras", default=None, help="Wczytaj zapisany model i renderuj epizody (bez treningu).")
 @click.option("--resume", metavar="MODEL.keras", default=None, help="Wznow trening z zapisanego checkpointu.")
-def main(env: str, render: str | None, resume: str | None) -> None:
-    if render:
+@click.option(
+    "--check-critic",
+    "check_critic_path",
+    metavar="MODEL.keras",
+    default=None,
+    help="Wczytaj model i wypisz V(s) dla stanow z CRITIC_PROBE_STATES (zgodnie z --env).",
+)
+def main(
+    env: str,
+    render: str | None,
+    resume: str | None,
+    check_critic_path: str | None,
+) -> None:
+    if check_critic_path and render:
+        raise click.UsageError("Opcje --check-critic i --render wykluczaja sie.")
+    if check_critic_path and resume:
+        raise click.UsageError("Opcje --check-critic i --resume wykluczaja sie.")
+
+    if check_critic_path:
+        check_critic(check_critic_path, env_name=env)
+    elif render:
         render_model(render, env_name=env)
     else:
         train(env_name=env, resume_path=resume)
