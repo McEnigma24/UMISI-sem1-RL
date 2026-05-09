@@ -8,8 +8,6 @@ cls
 $env:KERAS_BACKEND = "torch"
 python solution.py --env lunar
 
-
-
 # python solution.py --env cartpole
 # python solution.py --env cartpole --resume cartpole_checkpoint_ep1100.keras
 # python solution.py --env cartpole --resume cartpole_single_network_small_bigger_learning_rate_1\cartpole_checkpoint_ep1600.keras
