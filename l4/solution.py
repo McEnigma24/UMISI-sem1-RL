@@ -70,12 +70,13 @@ def to_numpy(tensor) -> np.ndarray:
 ENV_CONFIGS: dict[str, dict] = {
     "cartpole": {
         "gym_id":           "CartPole-v1",
-        "hidden":           (128, 128),
+        # "hidden":           (128, 128),
+        "hidden":           (32, 32),
         "learning_rate":    1e-3,
         "discount_factor":  0.99,
         "entropy_coeff":    0.0,
-        # "separate_trunks":  False,
-        "separate_trunks":  True,
+        "separate_trunks":  False,
+        # "separate_trunks":  True,
         "n_episodes":       2000,
         "solved_threshold": 475.0,
         "window":           100,
