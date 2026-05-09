@@ -12,7 +12,8 @@ python solution.py --env cartpole --resume cartpole_separete_networks_2\cartpole
 
 
 # Critic-Check #
-# python solution.py --env cartpole --check-critic cartpole_single_network\cartpole_final.keras
+python solution.py --env cartpole --check-critic cartpole_single_network\cartpole_final.keras
+python solution.py --env cartpole --check-critic cartpole_separate_networks\cartpole_final.keras
 
 
 # py -3.13
