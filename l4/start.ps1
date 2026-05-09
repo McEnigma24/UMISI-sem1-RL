@@ -6,8 +6,8 @@ cls
 
 $baseName = "lunar_0_entropy"
 
-# $env:KERAS_BACKEND = "torch"
-# python solution.py --env lunar
+$env:KERAS_BACKEND = "torch"
+python solution.py --env lunar
 
 # python solution.py --env cartpole
 # python solution.py --env cartpole --resume cartpole_checkpoint_ep1100.keras
