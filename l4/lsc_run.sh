@@ -1,0 +1,1 @@
+sbatch lsc_job
