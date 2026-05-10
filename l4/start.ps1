@@ -1,13 +1,18 @@
 Set-Location $PSScriptRoot
-cls
+# cls
 
 # KERAS_BACKEND=torch;
 # py --3.12 solution.py --env cartpole
 
 $baseName = "lunar_0_entropy"
 
+
+
 $env:KERAS_BACKEND = "torch"
-python solution.py --env lunar
+# python solution.py --env lunar
+
+python solution.py --env lunar --render lunar\lunar_final.keras
+# python solution.py --env lunar --render lunar_0_entropy\lunar_final.keras
 
 # python solution.py --env cartpole
 # python solution.py --env cartpole --resume cartpole_checkpoint_ep1100.keras
