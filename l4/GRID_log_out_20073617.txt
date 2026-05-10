@@ -1,0 +1,67 @@
+total 6504
+drwxr-xr-x 12 plgwmackowiak plgrid   4096 May 10 13:12 .
+drwxr-xr-x  7 plgwmackowiak plgrid   4096 May  9 23:02 ..
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:02 cartpole_separate_networks_1
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_separate_networks_2
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_separate_networks_3
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_single_network
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_single_network_small
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_single_network_small_bigger_learning_rate_1
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 cartpole_single_network_small_bigger_learning_rate_2
+-rw-r--r--  1 plgwmackowiak plgrid      0 May  9 23:02 .gitignore
+-rw-r--r--  1 plgwmackowiak plgrid      0 May 10 13:12 GRID_log_err_20073617.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 May 10 13:12 GRID_log_out_20073617.txt
+-rw-r--r--  1 plgwmackowiak plgrid 285489 May  9 23:03 ladownik.html
+-rw-r--r--  1 plgwmackowiak plgrid 116899 May  9 23:03 ladownik.pdf
+-rw-r--r--  1 plgwmackowiak plgrid      9 May 10 13:12 latest_job_started
+-rwxr-xr-x  1 plgwmackowiak plgrid     47 May 10 13:12 lsc_cancel.sh
+-rw-r--r--  1 plgwmackowiak plgrid    750 May 10 12:51 lsc_job
+-rwxr-xr-x  1 plgwmackowiak plgrid     98 May 10 13:11 lsc_run.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid     16 May 10 12:42 lsc_status.sh
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May  9 23:03 lunar
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 May 10 12:48 lunar_0_entropy
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:52 lunar_checkpoint_ep100.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:52 lunar_checkpoint_ep150.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:53 lunar_checkpoint_ep200.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:54 lunar_checkpoint_ep250.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:54 lunar_checkpoint_ep300.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:55 lunar_checkpoint_ep350.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:55 lunar_checkpoint_ep400.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:56 lunar_checkpoint_ep450.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:57 lunar_checkpoint_ep500.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:51 lunar_checkpoint_ep50.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:58 lunar_checkpoint_ep550.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:59 lunar_checkpoint_ep600.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 12:59 lunar_checkpoint_ep650.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 13:01 lunar_checkpoint_ep700.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 13:03 lunar_checkpoint_ep750.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 13:05 lunar_checkpoint_ep800.keras
+-rw-r--r--  1 plgwmackowiak plgrid 301925 May 10 13:10 lunar_checkpoint_ep850.keras
+-rw-r--r--  1 plgwmackowiak plgrid  68636 May 10 13:12 .nfs000000000704498f00000916
+-rw-r--r--  1 plgwmackowiak plgrid    950 May 10 12:39 .plgrid_commands
+drwxr-xr-x  2 plgwmackowiak plgrid   4096 May 10 13:10 plots_lunar
+-rw-r--r--  1 plgwmackowiak plgrid   1065 May  9 23:03 report.ipynb
+-rw-r--r--  1 plgwmackowiak plgrid    136 May  9 23:03 requirements.txt
+-rw-r--r--  1 plgwmackowiak plgrid  18466 May  9 23:03 solution.py
+-rw-r--r--  1 plgwmackowiak plgrid 919222 May 10 12:48 sprawozdanie_l4.ipynb
+-rw-r--r--  1 plgwmackowiak plgrid   1765 May 10 12:48 start.ps1
+SOURCING -> /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l4/.venv/bin/activate
+Zaczynamy trening na GPU...
+[backend] PyTorch  |  urzadzenie: CUDA
+Model: "ActorCritic"
+┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)        ┃ Output Shape      ┃    Param # ┃ Connected to      ┃
+┡━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ obs (InputLayer)    │ (None, 8)         │          0 │ -                 │
+├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+│ fc1 (Dense)         │ (None, 256)       │      2,304 │ obs[0][0]         │
+├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+│ fc2 (Dense)         │ (None, 256)       │     65,792 │ fc1[0][0]         │
+├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+│ logits (Dense)      │ (None, 4)         │      1,028 │ fc2[0][0]         │
+├─────────────────────┼───────────────────┼────────────┼───────────────────┤
+│ value (Dense)       │ (None, 1)         │        257 │ fc2[0][0]         │
+└─────────────────────┴───────────────────┴────────────┴───────────────────┘
+ Total params: 69,381 (271.02 KB)
+ Trainable params: 69,381 (271.02 KB)
+ Non-trainable params: 0 (0.00 B)

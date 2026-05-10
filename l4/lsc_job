@@ -28,8 +28,7 @@ source $scratch_activation_path
 # START #
 echo "Zaczynamy trening na GPU..."
 
-# KERAS_BACKEND=torch python solution.py --env lunar
-
-sleep 10
+KERAS_BACKEND=torch python solution.py --env lunar
+# sleep 10
 
 echo "Koniec zadania."
