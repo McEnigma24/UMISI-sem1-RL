@@ -4,6 +4,3 @@ __pycache__/
 *$py.class
 
 .venv/
-
-# Lab l5 — zapisane runy (wagi + metadata)
-l5/weights/
