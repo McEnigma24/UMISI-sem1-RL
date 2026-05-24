@@ -1,0 +1,6 @@
+# shellcheck shell=bash
+# Źródłuj z katalogu ``docker/`` (``source "$(dirname …)/config"``).
+_DOCKER_L5_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+L5_ROOT="$(cd "$_DOCKER_L5_DIR/.." && pwd)"
+DOCKERFILE="$_DOCKER_L5_DIR/Dockerfile"
+DOCKER_IMAGE="${DOCKER_IMAGE:-l5-rl:latest}"

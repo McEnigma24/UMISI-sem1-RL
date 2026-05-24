@@ -39,11 +39,57 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
 ## Getting Started
 
-1. Set up the environment:
+1. Set up the environment — **wybierz jedną** z opcji:
+
+    ### A) Docker (bez venva na hoście)
+
+    W katalogu `l5` zależności są w obrazie; kod i artefakty (`runs/`, `weights/`) zostają na hoście dzięki montowaniu katalogu (skrypty w `docker/`, analogicznie do innych projektów z repo).
+
+    ```bash
+    cd l5
+    chmod +x docker/*.sh   # raz, jeśli pliki nie mają bitu wykonywania
+    ./docker/build.sh
+    ./docker/run.sh
+    ```
+
+    Domyślnie `./docker/run.sh` uruchamia `python train.py`. Pod spodem jest `xvfb-run` (entrypoint obrazu), bo na końcu treningu `train.py` odpala `render_mode="human"`.
+
+    Wczytanie runu i test z renderem:
+
+    ```bash
+    ./docker/run.sh python train.py --load weights/2026-05-24_14-30
+    ```
+
+    TensorBoard (logi w `./runs` na hoście, przeglądarka: `http://localhost:6006`):
+
+    ```bash
+    ./docker/tensorboard.sh
+    ```
+
+    Powłoka w kontenerze (bez entrypointu z xvfb):
+
+    ```bash
+    ./docker/shell.sh
+    ```
+
+    Inna nazwa obrazu (np. własny tag):
+
+    ```bash
+    DOCKER_IMAGE=moj-l5:dev ./docker/build.sh
+    DOCKER_IMAGE=moj-l5:dev ./docker/run.sh python train.py
+    ```
+
+    Wyłączenie `xvfb-run` (np. własny `DISPLAY`):
+
+    ```bash
+    SKIP_XVFB=1 ./docker/run.sh python -c "import sys; print(sys.version)"
+    ```
+
+    ### B) Lokalnie z pip
+
     ```bash
     pip install -r requirements.txt
     ```
-    Or any other way of doing the equivalent.
 
     **Windows + Python 3.13:** older pins (`mujoco` 3.1.x with `gymnasium-robotics` 1.3.x) install MuJoCo from source and fail unless `MUJOCO_PATH` is set. The versions in `requirements.txt` use a MuJoCo build that ships Windows wheels for 3.13.
 
