@@ -43,47 +43,28 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     ### A) Docker (bez venva na hoście)
 
-    W katalogu `l5` zależności są w obrazie; kod i artefakty (`runs/`, `weights/`) zostają na hoście dzięki montowaniu katalogu (skrypty w `docker/`, analogicznie do innych projektów z repo).
+    Zależności są w obrazie; katalog `l5/` (kod, `runs/`, `weights/`) montujesz do kontenera.
 
     ```bash
     cd l5
-    chmod +x docker/*.sh   # raz, jeśli pliki nie mają bitu wykonywania
-    ./docker/build.sh
-    ./docker/run.sh
+    chmod +x docker/enter_dev_container.sh start.sh   # raz, jeśli trzeba
+    ./docker/enter_dev_container.sh
     ```
 
-    Domyślnie `./docker/run.sh` uruchamia `python train.py`. Pod spodem jest `xvfb-run` (entrypoint obrazu), bo na końcu treningu `train.py` odpala `render_mode="human"`.
-
-    Wczytanie runu i test z renderem:
+    W środku (w `/workspace`, czyli Twoim `l5/`):
 
     ```bash
-    ./docker/run.sh python train.py --load weights/2026-05-24_14-30
+    ./start.sh
+    # np. wczytanie runu: ./start.sh --load weights/2026-05-24_14-30
     ```
 
-    TensorBoard (logi w `./runs` na hoście, przeglądarka: `http://localhost:6006`):
+    `start.sh` owija trening w `xvfb-run`, bo na końcu `train.py` używa `render_mode="human"`. Bez wirtualnego framebuffera: `SKIP_XVFB=1 ./start.sh`.
 
-    ```bash
-    ./docker/tensorboard.sh
-    ```
+    TensorBoard w tym samym kontenerze: `tensorboard --logdir runs --bind_all`, w przeglądarce `http://localhost:6006` (port jest wystawiony w `enter_dev_container.sh`).
 
-    Powłoka w kontenerze (bez entrypointu z xvfb):
+    Inna nazwa obrazu: `DOCKER_IMAGE=moj-l5:dev ./docker/enter_dev_container.sh`.
 
-    ```bash
-    ./docker/shell.sh
-    ```
-
-    Inna nazwa obrazu (np. własny tag):
-
-    ```bash
-    DOCKER_IMAGE=moj-l5:dev ./docker/build.sh
-    DOCKER_IMAGE=moj-l5:dev ./docker/run.sh python train.py
-    ```
-
-    Wyłączenie `xvfb-run` (np. własny `DISPLAY`):
-
-    ```bash
-    SKIP_XVFB=1 ./docker/run.sh python -c "import sys; print(sys.version)"
-    ```
+    Zależności instalują się tak jak lokalnie: ``pip install -r requirements.txt``. Wejście do kontenera używa **`--gpus all`** — potrzebny jest [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) i sterownik zgodny z wersją CUDA w wheelu PyTorcha z PyPI.
 
     ### B) Lokalnie z pip
 
