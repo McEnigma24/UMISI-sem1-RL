@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck disable=SC1091
 source "$(cd "$SCRIPT_DIR/.." && pwd)/config"
 
 clear
 docker build -f "$DOCKERFILE" -t "$DOCKER_IMAGE" "$L5_ROOT"
 docker image prune -f
 
-clear
+clear; set +euo pipefail
 docker run --rm -it \
-  --gpus all \
+  $DOCKER_RUN_FLAGS \
   -v "$L5_ROOT:/workspace" \
   -w /workspace \
   -p 6006:6006 \
@@ -20,3 +20,5 @@ docker run --rm -it \
 
 docker container prune -f
 clear
+
+tar -czf rl-l5.tar.gz rl-l5.tar

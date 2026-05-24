@@ -30,6 +30,4 @@ RUN pip install 'setuptools>=65,<81'
 RUN pip install torch==2.6.0
 RUN pip install tqdm==4.67.1
 
-
 WORKDIR /workspace
-

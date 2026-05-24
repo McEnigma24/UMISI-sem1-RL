@@ -4,4 +4,20 @@ set -euo pipefail
 _L5_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 L5_ROOT="$_L5_ROOT"
 DOCKERFILE="$L5_ROOT/Dockerfile"
-DOCKER_IMAGE="${DOCKER_IMAGE:-rl-l5}"
+DOCKER_IMAGE="rl-l5"
+
+# ``--gpus all`` tylko gdy jest NVIDIA na hoście **i** Docker potrafi to obsłużyć (nvidia-container-toolkit).
+DOCKER_GPUS=0
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && docker run --rm --gpus all busybox true >/dev/null 2>&1; then
+    DOCKER_GPUS=1
+  fi
+fi
+
+echo "DOCKER_GPUS: $DOCKER_GPUS"
+sleep 1
+
+DOCKER_RUN_FLAGS=""
+if [[ "$DOCKER_GPUS" == "1" ]]; then
+  DOCKER_RUN_FLAGS="--gpus all"
+fi

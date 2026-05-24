@@ -64,7 +64,7 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     Inna nazwa obrazu: `DOCKER_IMAGE=moj-l5:dev ./docker/enter_dev_container.sh`.
 
-    Zależności instalują się tak jak lokalnie: ``pip install -r requirements.txt``. Wejście do kontenera używa **`--gpus all`** — potrzebny jest [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) i sterownik zgodny z wersją CUDA w wheelu PyTorcha z PyPI.
+    Plik ``l5/config`` sam ustawia ``DOCKER_GPUS`` i ``DOCKER_RUN_FLAGS``: jeśli działa ``nvidia-smi`` **oraz** krótki test ``docker run --gpus all busybox true``, włączane jest ``--gpus all`` (pierwszy raz może pobrać obraz ``busybox``). Inaczej kontener startuje bez GPU. Pełne GPU wymaga [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) na hoście, z którego wołasz Dockera.
 
     ### B) Lokalnie z pip
 
