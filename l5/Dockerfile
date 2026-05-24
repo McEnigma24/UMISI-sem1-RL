@@ -11,6 +11,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MUJOCO_GL=egl
 
 RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get install -y --no-install-recommends libegl1
+RUN apt-get install -y --no-install-recommends libgl1
+RUN apt-get install -y --no-install-recommends libglib2.0-0
+RUN apt-get install -y --no-install-recommends libgomp1
+RUN apt-get install -y --no-install-recommends xauth
+RUN apt-get install -y --no-install-recommends xvfb
+RUN rm -rf /var/lib/apt/lists/*
+
 RUN pip install --upgrade pip
 RUN pip install gymnasium==1.2.2
 RUN pip install gymnasium-robotics==1.4.2
@@ -22,13 +30,6 @@ RUN pip install 'setuptools>=65,<81'
 RUN pip install torch==2.6.0
 RUN pip install tqdm==4.67.1
 
-RUN apt-get install -y --no-install-recommends libegl1
-RUN apt-get install -y --no-install-recommends libgl1
-RUN apt-get install -y --no-install-recommends libglib2.0-0
-RUN apt-get install -y --no-install-recommends libgomp1
-RUN apt-get install -y --no-install-recommends xauth
-RUN apt-get install -y --no-install-recommends xvfb
-RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
