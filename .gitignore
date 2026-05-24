@@ -1,3 +1,6 @@
-*/__pycache__/*
+# Python bytecode (any depth — avoid "*/__pycache__/*", the * does not span "/")
+__pycache__/
+*.py[cod]
+*$py.class
 
-.venv
+.venv/

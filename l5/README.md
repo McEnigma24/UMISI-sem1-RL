@@ -47,6 +47,8 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     **Windows + Python 3.13:** older pins (`mujoco` 3.1.x with `gymnasium-robotics` 1.3.x) install MuJoCo from source and fail unless `MUJOCO_PATH` is set. The versions in `requirements.txt` use a MuJoCo build that ships Windows wheels for 3.13.
 
+    **TensorBoard on Python 3.13:** the standard library module `imghdr` was removed; `requirements.txt` pulls in `standard-imghdr` so `tensorboard --logdir runs` keeps working.
+
     Prefer a **virtual environment** for this lab (`python -m venv .venv` then activate it) so upgrading `gymnasium` does not conflict with other tools in your base conda env (for example `stable-baselines3` pins an older `gymnasium`).
 
 2. Review the provided codebase and identify where HER and automatic alpha adjustment need to be implemented.

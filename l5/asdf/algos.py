@@ -177,11 +177,11 @@ class SAC:
         # The entropy coefficient or entropy can be learned automatically
         # see Automating Entropy Adjustment for Maximum Entropy RL section
         # of https://arxiv.org/abs/1812.05905
-        if isinstance(self.alpha, str) and self.alpha.startswith("auto"):
+        if isinstance(alpha, str) and alpha.startswith("auto"):
             # Default initial value of alpha when learned
             init_value = 1.0
-            if "_" in self.alpha:
-                init_value = float(self.alpha.split("_")[1])
+            if "_" in alpha:
+                init_value = float(alpha.split("_")[1])
                 assert (
                     init_value > 0.0
                 ), "The initial value of alpha must be greater than 0"
@@ -201,7 +201,7 @@ class SAC:
             # Force conversion to float
             # this will throw an error if a malformed string (different from 'auto') is passed
             self.alpha = torch.tensor(
-                float(self.alpha), dtype=torch.float32, device=alpha_device
+                float(alpha), dtype=torch.float32, device=alpha_device
             )
             self.alpha_optimizer = None
             self.log_alpha = None
