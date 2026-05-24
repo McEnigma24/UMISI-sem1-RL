@@ -51,9 +51,13 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     Prefer a **virtual environment** for this lab (`python -m venv .venv` then activate it) so upgrading `gymnasium` does not conflict with other tools in your base conda env (for example `stable-baselines3` pins an older `gymnasium`).
 
-2. Review the provided codebase and identify where HER and automatic alpha adjustment need to be implemented.
+2. Train and evaluate with `train.py`:
+    - **Training** (default): `python train.py` — writes a run under `weights/<YYYY-mm-dd_HH-MM>/` with `metadata.json` (full hyperparameter signature) and `policy.pt`.
+    - **Load + render test only**: `python train.py --load weights/<that-folder>` — aborts unless `metadata.json` matches the current hyperparameters in `train.py`.
 
-3. Test your implementation on the provided environments and analyze the results.
+3. Review the provided codebase and identify where HER and automatic alpha adjustment need to be implemented.
+
+4. Test your implementation on the provided environments and analyze the results.
 
 ## Submission
 
