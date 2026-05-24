@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from typing import Any, Optional, Union
 
 import gymnasium as gym
@@ -142,6 +143,14 @@ class DictReplayBuffer(BaseBuffer):
 
 
 class HerReplayBuffer(DictReplayBuffer):
+    """
+    Hindsight Experience Replay (HER) on top of a dict observation replay buffer.
+
+    Transitions are accumulated per episode; when the episode ends, each step is
+    stored once with the original goal and ``n_sampled_goal`` additional times with
+    relabeled ``desired_goal`` and reward from ``env.unwrapped.compute_reward``.
+    """
+
     def __init__(
         self,
         env: gym.Env,
@@ -154,25 +163,66 @@ class HerReplayBuffer(DictReplayBuffer):
         self.env = env
         self.n_sampled_goal = n_sampled_goal
         self.selection_strategy = goal_selection_strategy
-        # TODO: fill this in
-        # You can put additional attributes here if needed.
-        # Also: There is a number of methods in the base class that could be useful to override.
+        self._episode_transitions: list[dict[str, Any]] = []
+        self._rng = np.random.default_rng()
 
-   
-    def store(
+    @staticmethod
+    def _copy_obs(obs: dict[str, NDArray]) -> dict[str, NDArray]:
+        return {k: np.asarray(v, dtype=np.float32).copy() for k, v in obs.items()}
+
+    def start_episode(self) -> None:
+        self._episode_transitions.clear()
+
+    def end_episode(self) -> None:
+        ep = self._episode_transitions
+        if not ep:
+            return
+        env_compute = self.env.unwrapped
+        if not hasattr(env_compute, "compute_reward"):
+            raise AttributeError(
+                "HER requires env.unwrapped.compute_reward (goal-conditioned Gymnasium env)."
+            )
+
+        for t_idx, tr in enumerate(ep):
+            self._store_one_transition(
+                tr["observation"],
+                tr["action"],
+                tr["reward"],
+                tr["next_observation"],
+                tr["terminated"],
+                tr["truncated"],
+                tr["info"],
+            )
+            for _ in range(self.n_sampled_goal):
+                new_goal = self._sample_goal(ep, t_idx)
+                o = self._copy_obs(tr["observation"])
+                o2 = self._copy_obs(tr["next_observation"])
+                o["desired_goal"] = np.asarray(new_goal, dtype=np.float32).copy()
+                o2["desired_goal"] = np.asarray(new_goal, dtype=np.float32).copy()
+                info = deepcopy(tr["info"])
+                r = float(
+                    env_compute.compute_reward(
+                        o2["achieved_goal"], o2["desired_goal"], info
+                    )
+                )
+                if "is_success" in info:
+                    info["is_success"] = bool(np.isclose(r, 0.0))
+                self._store_one_transition(
+                    o, tr["action"], r, o2, tr["terminated"], tr["truncated"], info
+                )
+
+        self._episode_transitions.clear()
+
+    def _store_one_transition(
         self,
-        observation: dict[str, torch.Tensor],
-        action: torch.Tensor,
+        observation: dict[str, NDArray],
+        action: NDArray,
         reward: float,
-        next_observation: dict[str, torch.Tensor],
+        next_observation: dict[str, NDArray],
         terminated: bool,
         truncated: bool,
         info: dict[str, Any],
-    ):
-        # TODO: fill this in
-        # Just a suggestion: it may make sense to modify this method
-        
-        # Store the transition
+    ) -> None:
         super().store(
             observation=observation,
             action=action,
@@ -183,12 +233,66 @@ class HerReplayBuffer(DictReplayBuffer):
             info=info,
         )
 
-        # TODO: fill this in
-        # Or maybe here?
+    def _sample_goal(self, episode: list[dict[str, Any]], transition_idx: int) -> NDArray:
+        """Pick a substitute desired goal for HER (vector in achieved_goal space)."""
+        T = len(episode)
+        strat = self.selection_strategy
 
+        if strat == "final":
+            return np.asarray(
+                episode[-1]["next_observation"]["achieved_goal"], dtype=np.float32
+            ).copy()
 
+        if strat == "future":
+            candidates: list[NDArray] = []
+            for j in range(transition_idx + 1, T):
+                candidates.append(
+                    np.asarray(
+                        episode[j]["next_observation"]["achieved_goal"],
+                        dtype=np.float32,
+                    ).copy()
+                )
+            if not candidates:
+                return self._sample_goal_episode(episode)
+            pick = int(self._rng.integers(0, len(candidates)))
+            return np.asarray(candidates[pick], dtype=np.float32).copy()
 
+        if strat == "episode":
+            return self._sample_goal_episode(episode)
 
+        raise ValueError(
+            f"Unknown goal_selection_strategy={strat!r}; "
+            "expected 'final', 'future', or 'episode'."
+        )
 
+    def _sample_goal_episode(self, episode: list[dict[str, Any]]) -> NDArray:
+        j = int(self._rng.integers(0, len(episode)))
+        return np.asarray(
+            episode[j]["next_observation"]["achieved_goal"], dtype=np.float32
+        ).copy()
 
+    def store(
+        self,
+        observation: dict[str, NDArray],
+        action: NDArray,
+        reward: float,
+        next_observation: dict[str, NDArray],
+        terminated: bool,
+        truncated: bool,
+        info: dict[str, Any],
+    ) -> None:
+        self._episode_transitions.append(
+            dict(
+                observation=self._copy_obs(observation),
+                action=np.asarray(action, dtype=np.float32).copy(),
+                reward=reward,
+                next_observation=self._copy_obs(next_observation),
+                terminated=terminated,
+                truncated=truncated,
+                info=deepcopy(info),
+            )
+        )
 
+    def clear(self) -> None:
+        super().clear()
+        self._episode_transitions.clear()

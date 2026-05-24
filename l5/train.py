@@ -66,8 +66,7 @@ def main(env_id: str) -> None:
         update_every=1,
         update_after=1000,
         batch_size=64,
-        # alpha="auto", # use automatic alpha adjustment (uncoment when implemented)
-        alpha=0.05, # use fixed alpha (comment out when implementing automatic alpha adjustment)
+        alpha="auto",  # automatic entropy coefficient (SAC Applications paper)
         gamma=0.9,
         # polyak=0.95,
         lr=1e-4,

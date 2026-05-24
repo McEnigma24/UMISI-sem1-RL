@@ -6,6 +6,7 @@ from typing import Optional
 import gymnasium as gym
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
 from tqdm import trange
@@ -127,11 +128,8 @@ class SAC:
         self.n_updates = n_updates
         self.batch_size = batch_size
         self.target_entropy = target_entropy
-        # Entropy coefficient / Entropy temperature
-        # Inverse of the reward scale
-        self.alpha = alpha
-        # TODO: fill this in
-        # Additional properties for automatic alpha adjustment...
+        self.log_alpha: Optional[nn.Parameter] = None
+        self.alpha_optimizer: Optional[Adam] = None
 
         # Create actor-critic module and target networks
         self.policy = policy
@@ -191,15 +189,22 @@ class SAC:
             # Consider: optimizing the log of the entropy coeff which is slightly different from the paper
             # as discussed in https://github.com/rail-berkeley/softlearning/issues/37
 
-            # TODO: fill this in
-            # self.alpha = ...
-            # self.alpha_optimizer = ...
+            self.log_alpha = nn.Parameter(
+                torch.tensor(
+                    np.log(init_value), dtype=torch.float32, device=alpha_device
+                )
+            )
+            self.alpha_optimizer = Adam([self.log_alpha], lr=lr)
+            with torch.no_grad():
+                self.alpha = self.log_alpha.exp().detach()
         else:
             # Force conversion to float
             # this will throw an error if a malformed string (different from 'auto') is passed
             self.alpha = torch.tensor(
                 float(self.alpha), dtype=torch.float32, device=alpha_device
             )
+            self.alpha_optimizer = None
+            self.log_alpha = None
 
     # Set up function for computing SAC Q-losses
     def compute_loss_q(self, data):
@@ -224,7 +229,8 @@ class SAC:
             q1_pi_targ = self.policy_targ.q1(o2, a2)
             q2_pi_targ = self.policy_targ.q2(o2, a2)
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
-            backup = r + self.gamma * (1 - ter) * (q_pi_targ - self.alpha * logp_a2)
+            ent_coef = self._entropy_coefficient(detach=True)
+            backup = r + self.gamma * (1 - ter) * (q_pi_targ - ent_coef * logp_a2)
 
         # MSE loss against Bellman backup
         loss_q1 = F.mse_loss(q1, backup)
@@ -238,6 +244,14 @@ class SAC:
 
         return loss_q, q_info
 
+    def _entropy_coefficient(self, detach: bool) -> torch.Tensor:
+        """Current entropy temperature α (from log α if learned)."""
+        if self.alpha_optimizer is None:
+            ent = self.alpha
+        else:
+            ent = self.log_alpha.exp()
+        return ent.detach() if detach else ent
+
     # Set up function for computing SAC pi loss
     def compute_loss_pi(self, data):
         o = data["observation"]
@@ -246,8 +260,9 @@ class SAC:
         q2_pi = self.policy.q2(o, pi)
         q_pi = torch.min(q1_pi, q2_pi)
 
-        # Entropy-regularized policy loss
-        loss_pi = (self.alpha * logp_pi - q_pi).mean()
+        # Entropy-regularized policy loss (α detached so only α-loss updates log α)
+        ent_coef = self._entropy_coefficient(detach=True)
+        loss_pi = (ent_coef * logp_pi - q_pi).mean()
 
         # Useful info for logging
         pi_info = dict(log_pi=logp_pi.detach().cpu().numpy())
@@ -258,11 +273,14 @@ class SAC:
         # Important: detach the variable from the graph
         # so we don't change it with other losses
         # see https://github.com/rail-berkeley/softlearning/issues/60
-        # TODO: fill this in
-        alpha_loss = 0
-        alpha = 0
-        return alpha_loss, alpha
-        # Remember to use target_entropy
+        if self.alpha_optimizer is None:
+            return (
+                torch.tensor(0.0, device=logp_pi.device, dtype=logp_pi.dtype),
+                self.alpha,
+            )
+        # Eq. for automating entropy adjustment (SAC Applications paper)
+        alpha_loss = -(self.log_alpha * (logp_pi + self.target_entropy).detach()).mean()
+        return alpha_loss, self.log_alpha.exp()
 
     def update(self, data) -> dict[str, float]:
         self.policy.train()
@@ -300,16 +318,21 @@ class SAC:
         # Optimize entropy coefficient, also called
         # entropy temperature or alpha in the paper
         if self.alpha_optimizer is not None:
-            alpha_loss, alpha = self.compute_loss_alpha(logp_pi)
-            # TODO: fill this in
-            # Update alpha...
+            alpha_loss, _ = self.compute_loss_alpha(logp_pi)
+            self.alpha_optimizer.zero_grad()
+            alpha_loss.backward()
+            self.alpha_optimizer.step()
+            with torch.no_grad():
+                self.alpha = self.log_alpha.exp().detach()
         else:
-            alpha_loss = np.array(0)
+            alpha_loss = torch.tensor(
+                0.0, device=next(self.policy.parameters()).device
+            )
 
         return {
             "q": loss_q.item(),
             "pi": loss_pi.item(),
-            "alpha": alpha_loss.item(),
+            "alpha": float(alpha_loss.detach().cpu()),
         }
 
     def test(
@@ -425,14 +448,19 @@ class SAC:
                     self.buffer.start_episode()
 
                 # Update handling
-                if t >= self.update_after and t % self.update_every == 0:
+                if (
+                    t >= self.update_after
+                    and t % self.update_every == 0
+                    and self.buffer.size > 0
+                ):
+                    bs = min(self.batch_size, self.buffer.size)
                     for j in range(self.n_updates or self.update_every):
-                        batch = self.buffer.sample_batch(self.batch_size)
+                        batch = self.buffer.sample_batch(bs)
                         losses = self.update(data=batch)
                         self.logger.log_scalar("loss_q", losses["q"], t)
                         self.logger.log_scalar("loss_pi", losses["pi"], t)
                         self.logger.log_scalar("loss_alpha", losses["alpha"], t)
-                        self.logger.log_scalar("alpha", self.alpha, t)
+                        self.logger.log_scalar("alpha", float(self.alpha.detach().cpu()), t)
 
                 # End of epoch handling
                 if t % log_interval == 0:
@@ -452,27 +480,37 @@ class SAC:
                     if stop:
                         break
 
+        # Flush any in-progress episode (important for HER episodic buffer).
+        self.buffer.end_episode()
+
         return test_ep_return
 
 
     def save(self, path: str):
-        torch.save(
-            {
-                "policy_state_dict": self.policy.state_dict(),
-                "alpha": self.alpha,
-                "pi_optimizer_state_dict": self.pi_optimizer.state_dict(),
-                "q_optimizer_state_dict": self.q_optimizer.state_dict(),
-                # TODO: fill this in
-                # "alpha_optimizer_state_dict": ...,
-            },
-            path,
-        )
+        payload = {
+            "policy_state_dict": self.policy.state_dict(),
+            "pi_optimizer_state_dict": self.pi_optimizer.state_dict(),
+            "q_optimizer_state_dict": self.q_optimizer.state_dict(),
+        }
+        if self.alpha_optimizer is not None:
+            payload["log_alpha"] = self.log_alpha.detach().cpu()
+            payload["alpha_optimizer_state_dict"] = self.alpha_optimizer.state_dict()
+        else:
+            payload["alpha"] = self.alpha
+        torch.save(payload, path)
 
     def load(self, path: str):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, map_location=next(self.policy.parameters()).device)
         self.policy.load_state_dict(checkpoint["policy_state_dict"])
         self.pi_optimizer.load_state_dict(checkpoint["pi_optimizer_state_dict"])
         self.q_optimizer.load_state_dict(checkpoint["q_optimizer_state_dict"])
-        self.alpha = checkpoint["alpha"]
-        # TODO: fill this in
-        # self.alpha_optimizer = ...
+        dev = next(self.policy.parameters()).device
+        if "log_alpha" in checkpoint and self.alpha_optimizer is not None:
+            self.log_alpha.data.copy_(
+                checkpoint["log_alpha"].to(dtype=self.log_alpha.dtype, device=dev)
+            )
+            self.alpha_optimizer.load_state_dict(checkpoint["alpha_optimizer_state_dict"])
+            with torch.no_grad():
+                self.alpha = self.log_alpha.exp().detach()
+        else:
+            self.alpha = checkpoint["alpha"].to(device=dev)
