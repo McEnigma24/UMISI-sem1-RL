@@ -18,9 +18,6 @@ if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
   fi
 fi
 
-echo "DOCKER_GPUS: $DOCKER_GPUS"
-sleep 1
-
 DOCKER_RUN_FLAGS=""
 if [[ "$DOCKER_GPUS" == "1" ]]; then
   DOCKER_RUN_FLAGS="--gpus all"
