@@ -62,7 +62,9 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     TensorBoard w tym samym kontenerze: `tensorboard --logdir runs --bind_all`, w przeglądarce `http://localhost:6006` (port jest wystawiony w `enter_dev_container.sh`).
 
-    Inna nazwa obrazu: `DOCKER_IMAGE=moj-l5:dev ./docker/enter_dev_container.sh`.
+    Wersja Pythona jest tylko w ``l5/config`` (``PYTAG``); ``Dockerfile`` jej nie pinuje — ``docker/enter_dev_container.sh`` przekazuje ``--build-arg PYTAG=…``. Ręczny ``docker build`` bez tego argumentu zakończy się komunikatem błędu z Dockerfile.
+
+    Inna nazwa obrazu: ustaw w ``l5/config`` ``DOCKER_IMAGE_BASE`` i ``PYTAG`` (domyślnie ``rl-l5`` + ``-3.12`` → ``rl-l5-3.12``). Pełna nadpisanie: ``DOCKER_IMAGE=moje:tag ./docker/enter_dev_container.sh``.
 
     Plik ``l5/config`` sam ustawia ``DOCKER_GPUS`` i ``DOCKER_RUN_FLAGS``: jeśli działa ``nvidia-smi`` **oraz** krótki test ``docker run --gpus all busybox true``, włączane jest ``--gpus all`` (pierwszy raz może pobrać obraz ``busybox``). Inaczej kontener startuje bez GPU. Pełne GPU wymaga [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) na hoście, z którego wołasz Dockera.
 

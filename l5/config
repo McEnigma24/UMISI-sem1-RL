@@ -4,7 +4,11 @@ set -euo pipefail
 _L5_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 L5_ROOT="$_L5_ROOT"
 DOCKERFILE="$L5_ROOT/Dockerfile"
-DOCKER_IMAGE="rl-l5"
+
+PY_TAG="3.12"
+PY_VERSION="python${PY_TAG}"
+DOCKER_IMAGE_BASE="rl-l5"
+DOCKER_IMAGE="${DOCKER_IMAGE_BASE}-${PY_VERSION}"
 
 # ``--gpus all`` tylko gdy jest NVIDIA na hoście **i** Docker potrafi to obsłużyć (nvidia-container-toolkit).
 DOCKER_GPUS=0

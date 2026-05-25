@@ -5,8 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$(cd "$SCRIPT_DIR/.." && pwd)/config"
 
 clear
-docker build -f "$DOCKERFILE" -t "$DOCKER_IMAGE" "$L5_ROOT"
+docker build -f "$DOCKERFILE" --build-arg "PY_TAG=${PY_TAG}" --build-arg "PY_VERSION=${PY_VERSION}" -t "$DOCKER_IMAGE" "$L5_ROOT"
 docker image prune -f
+
 
 clear; set +euo pipefail
 docker run --rm -it \
@@ -20,5 +21,3 @@ docker run --rm -it \
 
 docker container prune -f
 clear
-
-tar -czf rl-l5.tar.gz rl-l5.tar
