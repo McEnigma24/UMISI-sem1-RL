@@ -80,6 +80,8 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
 
     Prefer a **virtual environment** for this lab (`python -m venv .venv` then activate it) so upgrading `gymnasium` does not conflict with other tools in your base conda env (for example `stable-baselines3` pins an older `gymnasium`).
 
+    **`report.ipynb` (Cursor / VS Code):** the notebook needs the **`l5/.venv`** interpreter. Install deps in that venv, then run **`l5/register_jupyter_kernel.ps1`** once and pick kernel **Python (UMISI l5 .venv)**, or use **Enter interpreter path** → `l5\.venv\Scripts\python.exe`. If you open the repo as workspace **`WIN_sem_1`**, `.vscode/settings.json` already suggests that interpreter.
+
 2. Train and evaluate with `train.py`:
     - **Training** (default): `python train.py` — writes a run under `weights/<YYYY-mm-dd_HH-MM>/` with `metadata.json` (full hyperparameter signature) and `policy.pt`.
     - **Load + render test only**: `python train.py --load weights/<that-folder>` — aborts unless `metadata.json` matches the current hyperparameters in `train.py`.
