@@ -4,7 +4,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$(cd "$SCRIPT_DIR/.." && pwd)/config"
 
-clear
+clear; set +euo pipefail
 docker build -f "$DOCKERFILE" --build-arg "PY_TAG=${PY_TAG}" --build-arg "PY_VERSION=${PY_VERSION}" -t "$DOCKER_IMAGE" "$L5_ROOT"
 docker image prune -f
 
