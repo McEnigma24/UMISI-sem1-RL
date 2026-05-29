@@ -54,7 +54,7 @@ RUN ${PY_VERSION} -m pip install numpy==2.2.4
 RUN ${PY_VERSION} -m pip install panda-gym==3.0.7
 RUN ${PY_VERSION} -m pip install tensorboard==2.19.0
 RUN ${PY_VERSION} -m pip install 'setuptools>=65,<81'
-RUN ${PY_VERSION} -m pip install torch==2.6.0
+RUN ${PY_VERSION} -m pip install --extra-index-url https://download.pytorch.org/whl/cu129 torch==2.11.0+cu129
 RUN ${PY_VERSION} -m pip install tqdm==4.67.1
 
 # SYMLINKS #

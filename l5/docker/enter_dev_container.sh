@@ -8,6 +8,8 @@ clear; set +euo pipefail
 docker build -f "$DOCKERFILE" --build-arg "PY_TAG=${PY_TAG}" --build-arg "PY_VERSION=${PY_VERSION}" -t "$DOCKER_IMAGE" "$L5_ROOT"
 docker image prune -f
 
+echo "DOCKER_GPUS: $DOCKER_GPUS"
+sleep 1
 
 clear; set +euo pipefail
 docker run --rm -it \
