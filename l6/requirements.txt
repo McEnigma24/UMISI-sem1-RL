@@ -4,8 +4,6 @@
 #
 # Pierwsza linia techniczna musi być --extra-index-url — stąd torch bierze build +cu124.
 
---extra-index-url https://download.pytorch.org/whl/cu124
-
 # --- środowisko MuJoCo / Fetch ---
 gymnasium==1.2.2
 gymnasium-robotics==1.4.2
@@ -13,7 +11,6 @@ mujoco==3.8.1
 
 # --- numpy + PyTorch (nanodt: numpy>=2.2.5, torch>=2.7) ---
 numpy>=2.2.5,<2.3
-torch>=2.7.0,<2.9
 
 # --- ekspert PPO, logi ---
 stable-baselines3[extra]>=2.5.0,<3

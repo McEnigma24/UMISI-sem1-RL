@@ -30,13 +30,9 @@ Wszystko jest w **[`requirements.txt`](requirements.txt)**:
 ```powershell
 .\.venv\Scripts\Activate.ps1
 uv pip install -r requirements.txt
-```
+uv cache clean
 
-Opcjonalnie ten sam efekt przez skrypt (sprawdza 3.12 przed instalacją):
-
-```powershell
-python install_deps.py
-# lub: .\install_deps.ps1
+uv pip install torch --index-url https://download.pytorch.org/whl/cu126
 ```
 
 **Sterownik NVIDIA** musi być zgodny z wheelami **CUDA 12.4** (w razie wątpliwości: [pytorch.org/get-started](https://pytorch.org/get-started/locally/)). Inny suffix (`cu121` itd.) → w `requirements.txt` podmień URL w linii `--extra-index-url`.
