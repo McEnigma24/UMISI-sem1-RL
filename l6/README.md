@@ -1,4 +1,4 @@
-# L6 — Decision Transformer (FetchPickAndPlace-v3)
+# L6 — Decision Transformer (FetchPickAndPlace-v4)
 
 ## Python — wyłącznie **3.12.x**
 
@@ -49,3 +49,17 @@ python -c "import torch; print('cuda?', torch.cuda.is_available(), '|', torch.__
 
 - **`cuda? True`** — zainstalowany torch z CUDA i driver widzi GPU.
 - **`cuda? False`** — nadal możesz mieć **build +CUDA**, ale bez karty / bez sterownika obliczenia idą na CPU; to zachowanie PyTorch, nie „zły” plik requirements.
+
+---
+
+## Trening eksperta (PPO, FetchPickAndPlace-v4)
+
+Skrypt **[`train_expert_ppo.py`](train_expert_ppo.py)** — Stable-Baselines3 **PPO** + **`MultiInputPolicy`** (obserwacja typu Dict), zapis do `weights/<timestamp>/` (`ppo_model.zip`, `manifest.json`, opcjonalnie `best/` z EvalCallback).
+
+```powershell
+python train_expert_ppo.py --check-device
+python train_expert_ppo.py --timesteps 1_000_000 --tensorboard
+python train_expert_ppo.py --eval-only weights\...\ppo_model.zip
+```
+
+Fetch ma nagrodę rzadką — przy słabym sukcesie zwiększ `--timesteps` lub rozważ `FetchPickAndPlaceDense-v4` (inny `env_id`, nagroda gęsta). W Gymnasium **v3** jest oznaczone jako deprecated — domyślnie używamy **v4**.
