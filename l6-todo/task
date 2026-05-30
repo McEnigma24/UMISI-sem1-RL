@@ -1,0 +1,83 @@
+Opis zadania:
+Zadanie za 12 pkt.
+
+Twoim celem jest wytrenowanie agenta za pomocą algorytmu Decision Transformer (DT). Ale jak wiadomo – DT nie uczy się sam z siebie. Potrzebuje danych. A konkretnie – demonstracji.
+
+https://arxiv.org/pdf/2106.01345
+
+
+
+🔧 Etap 1: Zbieranie demonstracji
+
+
+Zacznij od wybrania dowolnego środowiska zgodnego z interfejsem Gymnasium
+
+👉 https://gymnasium.farama.org/
+
+
+
+Następnie użyj klasycznego algorytmu uczenia ze wzmocnieniem (np. z biblioteki Stable Baselines3 albo Spinning Up) do nauczenia agenta wykonywania zadania.
+
+Traktuj go jako „eksperta” – to jego działania nagrasz jako demonstracje.
+
+
+
+🎥 Etap 2: Nagraj i zapisz demonstracje
+
+
+Zebrane trajektorie zapisz w formacie Minari:
+
+👉 https://minari.farama.org/
+
+Minari to wygodny sposób na przechowywanie danych z demonstracjami, których później użyjesz do trenowania Decision Transformerów.
+
+Skompletuj dwa rodzaje zbioru danych:
+
+Z wyłącznie optymalnymi trajektoriami
+Ze średnio-optymalnymi trajektoriami
+
+
+🧠 Etap 3: Trening Decision Transformera
+
+
+Skorzystaj z gotowej implementacji algorytmu:
+
+👉 https://pypi.org/project/nanodt/
+
+👉 https://github.com/lubiluk/nanoDT
+
+
+
+Biblioteka nanoDT zawiera prostą i lekką implementację DT gotową do działania. Sprawdź katalog examples/, by szybko zorientować się, jak ruszyć z treningiem.
+
+
+
+📣 Bonus dla odważnych: Jeśli podczas pracy zauważysz coś, co można poprawić – śmiało otwórz pull request! Za sensowny wkład w rozwój biblioteki przewidziany jest bonus +3 pkt 🚀
+
+
+
+📊 Etap 4: Ewaluacja
+
+
+Porównaj skuteczność Twojego Decision Transformera z oryginalnym agentem-demonstratorem. Czy DT potrafi dorównać mistrzowi? A może go prześcignie?
+
+
+
+Porównaj i omów wyniki:
+
+DT trenowanego na optymalnych trajektoriach
+DT trenowanego na średnio-optymalnych trajektoriach
+Wyników eksperta (agenta, który wygenerował zbiór danych)
+Behavioral Cloning baseline
+Podsumowanie checklisty:
+Wybór środowiska Gym
+
+Trening eksperta (klasyczny RL)
+
+Zbieranie i zapis demonstracji w formacie Minari
+
+Trening Decision Transformera (z użyciem nanoDT)
+
+Ewaluacja i porównanie z ekspertem
+
+(Opcjonalnie) Pull request do nanoDT 😎
