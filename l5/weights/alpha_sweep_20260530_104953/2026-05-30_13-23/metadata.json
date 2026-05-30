@@ -1,0 +1,45 @@
+{
+  "saved_at_utc": "2026-05-30T11:23:23.618899+00:00",
+  "signature": {
+    "env_id": "PandaReach-v3",
+    "eval_render": {
+      "n_episodes": 50,
+      "sleep": 0.03333333333333333
+    },
+    "format_version": 1,
+    "her": {
+      "goal_selection_strategy": "future",
+      "n_sampled_goal": 3,
+      "replay_buffer_size_load": 50000,
+      "replay_buffer_size_train": 1000000
+    },
+    "policy": {
+      "extractor": "DictExtractor",
+      "hidden_sizes": [
+        64,
+        64
+      ]
+    },
+    "sac": {
+      "alpha": 0.05,
+      "batch_size": 64,
+      "gamma": 0.9,
+      "lr": 0.0001,
+      "max_episode_len": 100,
+      "n_test_episodes": 25,
+      "n_updates": null,
+      "polyak": 0.995,
+      "seed": 0,
+      "start_steps": 1000,
+      "target_entropy": "auto",
+      "update_after": 1000,
+      "update_every": 1
+    },
+    "train_loop": {
+      "log_interval": 1000,
+      "n_steps": 100000
+    }
+  },
+  "tensorboard_log_dir": "runs/alpha_sweep_20260530_104953/alpha_0p05",
+  "weights_file": "policy.pt"
+}

@@ -1,0 +1,25 @@
+{
+  "created_at_utc": "2026-05-30T13:09:18.504648+00:00",
+  "runs": [
+    {
+      "alpha": 0.05,
+      "tensorboard_log_dir": "runs/alpha_sweep_20260530_104953/alpha_0p05",
+      "weights_dir": "weights/alpha_sweep_20260530_104953/2026-05-30_13-23"
+    },
+    {
+      "alpha": 0.5,
+      "tensorboard_log_dir": "runs/alpha_sweep_20260530_104953/alpha_0p5",
+      "weights_dir": "weights/alpha_sweep_20260530_104953/2026-05-30_13-57"
+    },
+    {
+      "alpha": 0.95,
+      "tensorboard_log_dir": "runs/alpha_sweep_20260530_104953/alpha_0p95",
+      "weights_dir": "weights/alpha_sweep_20260530_104953/2026-05-30_14-33"
+    },
+    {
+      "alpha": "auto",
+      "tensorboard_log_dir": "runs/alpha_sweep_20260530_104953/alpha_auto",
+      "weights_dir": "weights/alpha_sweep_20260530_104953/2026-05-30_15-09"
+    }
+  ]
+}
