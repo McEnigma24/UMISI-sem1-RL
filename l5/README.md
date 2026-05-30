@@ -86,9 +86,27 @@ For more details, refer to the original HER paper: ["Hindsight Experience Replay
     - **Training** (default): `python train.py` — writes a run under `weights/<YYYY-mm-dd_HH-MM>/` with `metadata.json` (full hyperparameter signature) and `policy.pt`.
     - **Load + render test only**: `python train.py --load weights/<that-folder>` — aborts unless `metadata.json` matches the current hyperparameters in `train.py`.
 
-3. Review the provided codebase and identify where HER and automatic alpha adjustment need to be implemented.
+3. **Sweep entropy coefficient α** (optional, for comparing many fixed values in TensorBoard and in `report.ipynb`):
 
-4. Test your implementation on the provided environments and analyze the results.
+    From `l5/` (with the same venv / deps as for `train.py`):
+
+    ```bash
+    python train_alpha_sweep.py --dry-run    # print planned TB paths only
+    python train_alpha_sweep.py              # seven fixed α + final run with alpha="auto"
+    python train_alpha_sweep.py --skip-auto  # only the seven fixed α (no auto run)
+    ```
+
+    Each run logs to `runs/<sweep_id>/alpha_<...>/` and saves weights under `weights/<sweep_id>/<timestamp>/`. `metadata.json` includes `tensorboard_log_dir` (path relative to `l5/`) so the notebook can pair logs without guessing. A growing `weights/<sweep_id>/manifest.json` lists each finished run.
+
+    **TensorBoard:** `tensorboard --logdir runs/<sweep_id>` (or `--logdir runs` to see all sweeps).
+
+    **Cost:** each run uses `TRAIN_N_STEPS` from `train.py` (default 100_000 env steps). The default sweep is **eight** trainings (seven fixed α + one `auto`) ≈ eight times the wall-clock of one training.
+
+    **Loading a specific sweep checkpoint** (`train.py --load` or `load_sac_from_run_dir` in the notebook): `train.py` must still match the run’s full signature — set `SAC_KWARGS["alpha"]` (and any other differing fields) in `train.py` to the values stored in that run’s `metadata.json` before loading.
+
+4. Review the provided codebase and identify where HER and automatic alpha adjustment need to be implemented.
+
+5. Test your implementation on the provided environments and analyze the results.
 
 ## Submission
 

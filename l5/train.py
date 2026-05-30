@@ -63,16 +63,20 @@ TRAIN_LOG_INTERVAL = 1_000
 EVAL_N_EPISODES = 50
 EVAL_RENDER_SLEEP = 1.0 / 30.0
 
-WEIGHTS_ROOT = Path(__file__).resolve().parent / "weights"
+L5_ROOT = Path(__file__).resolve().parent
+WEIGHTS_ROOT = L5_ROOT / "weights"
 METADATA_FILENAME = "metadata.json"
 WEIGHTS_FILENAME = "policy.pt"
 
 
-def canonical_signature() -> dict[str, Any]:
+def canonical_signature(sac_branch: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Pełna sygnatura eksperymentu — zapisywana przy treningu i porównywana przy ``--load``.
-    Zmiana któregokolwiek pola wymaga nowego treningu (stare katalogi ``weights/`` przestaną pasować).
+
+    ``sac_branch``: słownik przekazany do ``SAC(...)`` dla danego runu (np. po merge z
+    ``SAC_KWARGS``). Gdy ``None``, używane jest globalne ``SAC_KWARGS`` z tego pliku.
     """
+    sac = dict(SAC_KWARGS) if sac_branch is None else dict(sac_branch)
     return {
         "format_version": 1,
         "env_id": DEFAULT_ENV_ID,
@@ -86,7 +90,7 @@ def canonical_signature() -> dict[str, Any]:
             "replay_buffer_size_train": REPLAY_BUFFER_SIZE_TRAIN,
             "replay_buffer_size_load": REPLAY_BUFFER_SIZE_LOAD,
         },
-        "sac": dict(SAC_KWARGS),
+        "sac": sac,
         "train_loop": {
             "n_steps": TRAIN_N_STEPS,
             "log_interval": TRAIN_LOG_INTERVAL,
@@ -135,14 +139,35 @@ def allocate_run_directory(weights_root: Path) -> Path:
     raise RuntimeError("Nie udało się utworzyć unikalnego katalogu pod weights/")
 
 
-def save_training_run(algo: SAC, run_dir: Path) -> None:
+def _tensorboard_dir_for_metadata(tb_dir: Path | None) -> str | None:
+    """Ścieżka do zapisu w metadata: względem L5_ROOT, jeśli się da."""
+    if tb_dir is None:
+        return None
+    resolved = tb_dir.resolve()
+    try:
+        return str(resolved.relative_to(L5_ROOT))
+    except ValueError:
+        return str(resolved)
+
+
+def save_training_run(
+    algo: SAC,
+    run_dir: Path,
+    *,
+    sac_kwargs: dict[str, Any] | None = None,
+    tensorboard_log_dir: Path | None = None,
+) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
-    sig = canonical_signature()
-    doc = {
+    effective_sac = dict(SAC_KWARGS) if sac_kwargs is None else dict(sac_kwargs)
+    sig = canonical_signature(sac_branch=effective_sac)
+    doc: dict[str, Any] = {
         "signature": sig,
         "weights_file": WEIGHTS_FILENAME,
         "saved_at_utc": datetime.now(timezone.utc).isoformat(),
     }
+    tb_meta = _tensorboard_dir_for_metadata(tensorboard_log_dir)
+    if tb_meta is not None:
+        doc["tensorboard_log_dir"] = tb_meta
     meta_path = run_dir / METADATA_FILENAME
     with meta_path.open("w", encoding="utf-8") as f:
         json.dump(doc, f, indent=2, sort_keys=True)
@@ -227,6 +252,67 @@ def load_sac_from_run_dir(run_dir: str | Path) -> Tuple[gym.Env, SAC, dict[str, 
     return env, algo, doc
 
 
+def run_training_session(
+    *,
+    sac_kwargs: dict[str, Any] | None = None,
+    tensorboard_log_dir: Path | None = None,
+    weights_root: Path | None = None,
+) -> Path:
+    """
+    Jedna sesja treningu SAC+HER. ``sac_kwargs`` jest mergowany z :data:`SAC_KWARGS`
+    (nadpisuje wybrane klucze). ``tensorboard_log_dir`` — jawny katalog logów TB
+    (utworzony jeśli brak); ``None`` zachowuje domyślne zachowanie SummaryWriter.
+
+    Zwraca katalog runu pod ``weights/`` (z ``metadata.json`` i ``policy.pt``).
+    """
+    effective = {**SAC_KWARGS, **(sac_kwargs or {})}
+    device = resolve_device()
+    env = gym.make(DEFAULT_ENV_ID)
+
+    policy = MlpPolicy(
+        env.observation_space,
+        env.action_space,
+        hidden_sizes=POLICY_HIDDEN,
+        extractor_type=DictExtractor,
+    )
+    policy.to(device)
+
+    buffer = HerReplayBuffer(
+        env=env,
+        size=REPLAY_BUFFER_SIZE_TRAIN,
+        n_sampled_goal=HER_N_SAMPLED_GOAL,
+        goal_selection_strategy=HER_STRATEGY,
+        device=device,
+    )
+    if tensorboard_log_dir is not None:
+        tensorboard_log_dir.mkdir(parents=True, exist_ok=True)
+    logger = TensorboardLogger(save_dir=tensorboard_log_dir)
+    logger.open()
+
+    algo = SAC(
+        env,
+        policy=policy,
+        buffer=buffer,
+        logger=logger,
+        **effective,
+    )
+    algo.train(n_steps=TRAIN_N_STEPS, log_interval=TRAIN_LOG_INTERVAL)
+    env.close()
+    logger.close()
+
+    root = weights_root or WEIGHTS_ROOT
+    run_dir = allocate_run_directory(root)
+    save_training_run(
+        algo,
+        run_dir,
+        sac_kwargs=effective,
+        tensorboard_log_dir=tensorboard_log_dir,
+    )
+
+    policy.cpu()
+    return run_dir
+
+
 def run_eval_render_from_run_dir(run_dir: str | Path) -> dict[str, Any]:
     run_path = Path(run_dir).expanduser().resolve()
     env, algo, doc = load_sac_from_run_dir(run_path)
@@ -253,42 +339,7 @@ def run_eval_render_from_run_dir(run_dir: str | Path) -> dict[str, Any]:
 
 
 def main_train() -> None:
-    device = resolve_device()
-    env = gym.make(DEFAULT_ENV_ID)
-
-    policy = MlpPolicy(
-        env.observation_space,
-        env.action_space,
-        hidden_sizes=POLICY_HIDDEN,
-        extractor_type=DictExtractor,
-    )
-    policy.to(device)
-
-    buffer = HerReplayBuffer(
-        env=env,
-        size=REPLAY_BUFFER_SIZE_TRAIN,
-        n_sampled_goal=HER_N_SAMPLED_GOAL,
-        goal_selection_strategy=HER_STRATEGY,
-        device=device,
-    )
-    logger = TensorboardLogger()
-    logger.open()
-
-    algo = SAC(
-        env,
-        policy=policy,
-        buffer=buffer,
-        logger=logger,
-        **SAC_KWARGS,
-    )
-    algo.train(n_steps=TRAIN_N_STEPS, log_interval=TRAIN_LOG_INTERVAL)
-    env.close()
-    logger.close()
-
-    run_dir = allocate_run_directory(WEIGHTS_ROOT)
-    save_training_run(algo, run_dir)
-
-    policy.cpu()
+    run_dir = run_training_session(sac_kwargs=None, tensorboard_log_dir=None)
     run_eval_render_from_run_dir(run_dir)
 
 
