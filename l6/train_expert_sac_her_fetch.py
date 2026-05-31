@@ -69,6 +69,7 @@ DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV: dict[str, float] = {
     "FetchPickAndPlace-v4": 0.80,
 }
 
+MY_TIMESTEPS_LIMIT = 1_500_000
 
 @dataclass
 class SacHerFetchConfig:
@@ -100,7 +101,7 @@ class SacHerFetchConfig:
 
 def default_config() -> SacHerFetchConfig:
     return SacHerFetchConfig(
-        timesteps=3_000_000,
+        timesteps=MY_TIMESTEPS_LIMIT,
         n_envs=4,
         seed=0,
         learning_rate=3e-4,
@@ -444,7 +445,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--timesteps",
         type=int,
-        default=3_000_000,
+        default=MY_TIMESTEPS_LIMIT,
         help="Budżet kroków środowiska na jeden run (suite: ten sam budżet *na każde* env z FETCH_SPARSE_V4)",
     )
     p.add_argument("--n-envs", type=int, default=4)
