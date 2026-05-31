@@ -4,12 +4,14 @@ Ekspert SAC + HER na środowiskach Fetch (Gymnasium Robotics v4).
 SAC z ``HerReplayBuffer`` to standard z pracy Plappert et al. / benchmarków Fetch
 (lepszy niż samo PPO na rzadkiej nagrodzie).
 
-Domyślnie trenuje **po kolei** na całym zestawie sparse Fetch-v4:
-  FetchReach, FetchPush, FetchSlide, FetchPickAndPlace.
+Domyślnie: **wczesne zatrzymanie**, gdy ``success_rate_final >= próg``; próg jest
+**osobny dla każdego Fetch** (łatwiejsze zadania = wyższy próg), z fallbackiem dla
+innych ``--env-id``. Opcjonalnie ``--success-threshold`` nadpisuje **wszystkie** envy
+jedną wartością. Bez progu — pełny budżet ``--timesteps`` (domyślnie 3M).
 
 Przykłady:
-  python train_expert_sac_her_fetch.py --timesteps 500_000
-  python train_expert_sac_her_fetch.py --env-id FetchPickAndPlace-v4 --timesteps 1_000_000
+  python train_expert_sac_her_fetch.py
+  python train_expert_sac_her_fetch.py --env-id FetchPickAndPlace-v4
   python train_expert_sac_her_fetch.py --check-device
 """
 from __future__ import annotations
@@ -33,7 +35,6 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from train_expert_ppo import (
-    RolloutEvalResult,
     allocate_run_dir,
     rollout_eval,
 )
@@ -50,6 +51,23 @@ FETCH_SPARSE_V4: tuple[str, ...] = (
     "FetchSlide-v4",
     "FetchPickAndPlace-v4",
 )
+
+# # Progi early-stop (success_rate_final z rollout_eval) — per zadanie, trochę poniżej
+# # typowych mocnych runów (~0.9+), sensownie pod amatorski trening.
+# DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV: dict[str, float] = {
+#     "FetchReach-v4": 0.93,
+#     "FetchPush-v4": 0.78,
+#     "FetchSlide-v4": 0.66,
+#     "FetchPickAndPlace-v4": 0.62,
+# }
+
+# moje #
+DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV: dict[str, float] = {
+    "FetchReach-v4": 0.95,
+    "FetchPush-v4": 0.85,
+    "FetchSlide-v4": 0.82,
+    "FetchPickAndPlace-v4": 0.80,
+}
 
 
 @dataclass
@@ -70,11 +88,19 @@ class SacHerFetchConfig:
     eval_freq: int
     n_eval_episodes: int
     policy_net_arch: tuple[int, ...]
+    # Wczesne zatrzymanie po progu sukcesu (rollout_eval): per-env z tabeli albo
+    # ``early_stop_success_threshold_uniform`` (np. z --success-threshold).
+    early_stop_enabled: bool
+    early_stop_success_threshold_uniform: float | None
+    early_stop_success_threshold_fallback: float
+    early_stop_check_freq: int
+    early_stop_eval_episodes: int
+    min_steps_before_early_stop: int
 
 
 def default_config() -> SacHerFetchConfig:
     return SacHerFetchConfig(
-        timesteps=500_000,
+        timesteps=3_000_000,
         n_envs=4,
         seed=0,
         learning_rate=3e-4,
@@ -90,6 +116,24 @@ def default_config() -> SacHerFetchConfig:
         eval_freq=10_000,
         n_eval_episodes=20,
         policy_net_arch=(256, 256, 256),
+        early_stop_enabled=True,
+        early_stop_success_threshold_uniform=None,
+        early_stop_success_threshold_fallback=0.75,
+        early_stop_check_freq=25_000,
+        early_stop_eval_episodes=24,
+        min_steps_before_early_stop=150_000,
+    )
+
+
+def resolved_early_stop_success_threshold(env_id: str, cfg: SacHerFetchConfig) -> float:
+    """Jednolity override z CLI albo tabela + fallback dla nieznanego env_id."""
+    if cfg.early_stop_success_threshold_uniform is not None:
+        return float(cfg.early_stop_success_threshold_uniform)
+    return float(
+        DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV.get(
+            env_id,
+            cfg.early_stop_success_threshold_fallback,
+        )
     )
 
 
@@ -158,6 +202,67 @@ class FetchEpisodeTensorboardCallback(BaseCallback):
         return True
 
 
+class EarlySuccessStopCallback(BaseCallback):
+    """
+    Co ``check_freq`` kroków (po ``min_steps``) uruchamia krótką ewaluację
+    ``rollout_eval``. Gdy ``success_rate_final >= threshold`` — kończy ``learn()``
+    przed pełnym budżetem. W przeciwnym razie SB3 i tak jedzie do ``total_timesteps``.
+    """
+
+    def __init__(
+        self,
+        env_id: str,
+        *,
+        success_threshold: float,
+        check_freq: int,
+        eval_episodes: int,
+        min_steps: int,
+        eval_seed: int,
+        verbose: int = 0,
+    ):
+        super().__init__(verbose)
+        self.env_id = env_id
+        self.success_threshold = success_threshold
+        self.check_freq = max(int(check_freq), 1)
+        self.eval_episodes = max(int(eval_episodes), 5)
+        self.min_steps = max(int(min_steps), 0)
+        self.eval_seed = eval_seed
+        self._last_bucket = -1
+        self.stopped_early = False
+        self.stop_at_timesteps: int | None = None
+
+    def _on_step(self) -> bool:
+        t = int(self.num_timesteps)
+        if t < self.min_steps:
+            return True
+        bucket = t // self.check_freq
+        if bucket <= self._last_bucket:
+            return True
+        self._last_bucket = bucket
+
+        m = rollout_eval(
+            self.model,  # type: ignore[arg-type]
+            self.env_id,
+            n_episodes=self.eval_episodes,
+            seed=self.eval_seed + t,
+            deterministic=True,
+        )
+        self.logger.record("early_stop/success_rate_final", m.success_rate_final)
+        self.logger.record("early_stop/success_rate_any", m.success_rate_any)
+        self.logger.record("early_stop/mean_final_goal_dist_m", m.mean_final_goal_dist)
+        self.logger.record("early_stop/success_threshold", float(self.success_threshold))
+
+        if m.success_rate_final >= self.success_threshold:
+            self.stopped_early = True
+            self.stop_at_timesteps = t
+            print(
+                f"\n[early stop] success_rate_final={m.success_rate_final:.3f} "
+                f">= {self.success_threshold} przy num_timesteps={t}\n"
+            )
+            return False
+        return True
+
+
 def env_slug(env_id: str) -> str:
     return env_id.replace("/", "_").replace(":", "_")
 
@@ -178,6 +283,22 @@ def train_sac_her_one_env(
 
     print(f"\n=== SAC+HER | {env_id} | device={device} | n_envs={cfg.n_envs} ===")
 
+    stop_thr = resolved_early_stop_success_threshold(env_id, cfg)
+    thr_src = (
+        "uniform_override"
+        if cfg.early_stop_success_threshold_uniform is not None
+        else (
+            "builtin_table"
+            if env_id in DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV
+            else "fallback"
+        )
+    )
+    if cfg.early_stop_enabled:
+        print(
+            f"  Early stop: success_rate_final >= {stop_thr:.3f} "
+            f"({thr_src}; rollout_eval co {cfg.early_stop_check_freq} kroków po {cfg.min_steps_before_early_stop})"
+        )
+
     train_env = make_vec_env(env_id, cfg.n_envs)
     eval_env = make_vec_env(env_id, 1)
 
@@ -194,6 +315,18 @@ def train_sac_her_one_env(
                 render=False,
             )
         )
+
+    early_cb: EarlySuccessStopCallback | None = None
+    if cfg.early_stop_enabled:
+        early_cb = EarlySuccessStopCallback(
+            env_id,
+            success_threshold=stop_thr,
+            check_freq=cfg.early_stop_check_freq,
+            eval_episodes=cfg.early_stop_eval_episodes,
+            min_steps=cfg.min_steps_before_early_stop,
+            eval_seed=cfg.seed,
+        )
+        callbacks.append(early_cb)
 
     model = SAC(
         "MultiInputPolicy",
@@ -226,6 +359,10 @@ def train_sac_her_one_env(
         log_interval=10,
     )
 
+    actual_ts = int(model.num_timesteps)
+    stopped_early = bool(early_cb and early_cb.stopped_early)
+    stop_at = early_cb.stop_at_timesteps if early_cb and early_cb.stopped_early else None
+
     model_path = run_dir / "sac_her_model.zip"
     model.save(str(model_path))
 
@@ -244,6 +381,17 @@ def train_sac_her_one_env(
         "env_id": env_id,
         "device": device,
         "train_config": asdict(cfg),
+        "training": {
+            "requested_timesteps": cfg.timesteps,
+            "actual_timesteps": actual_ts,
+            "early_stop_enabled": cfg.early_stop_enabled,
+            "stopped_early": stopped_early,
+            "stop_at_timesteps": stop_at,
+            "early_stop_success_threshold_resolved": stop_thr
+            if cfg.early_stop_enabled
+            else None,
+            "early_stop_success_threshold_source": thr_src if cfg.early_stop_enabled else None,
+        },
         "post_train_eval": asdict(metrics),
         "artifacts": {
             "model": model_path.name,
@@ -259,9 +407,16 @@ def train_sac_her_one_env(
     train_env.close()
     eval_env.close()
 
+    es_note = ""
+    if stopped_early and stop_at is not None:
+        es_note = f"\n  Wczesny stop przy {stop_at} kroków (próg sukcesu osiągnięty)."
+    elif cfg.early_stop_enabled:
+        es_note = f"\n  Pełny budżet {cfg.timesteps} — próg nie osiągnięty w trakcie treningu."
+
     print(
         f"Zapisano: {model_path}\n"
         f"  TensorBoard: tensorboard --logdir {tb_dir}\n"
+        f"  Kroki: {actual_ts} / {cfg.timesteps}{es_note}\n"
         f"  Eval: success_final={metrics.success_rate_final:.3f}, "
         f"success_any={metrics.success_rate_any:.3f}, "
         f"mean_final_dist_m={metrics.mean_final_goal_dist:.4f}"
@@ -272,6 +427,9 @@ def train_sac_her_one_env(
         "run_dir": str(run_dir),
         "model": str(model_path),
         "metrics": asdict(metrics),
+        "actual_timesteps": actual_ts,
+        "stopped_early": stopped_early,
+        "stop_at_timesteps": stop_at,
     }
 
 
@@ -283,7 +441,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Jedno środowisko (np. FetchPickAndPlace-v4). Domyślnie: cały zestaw FETCH_SPARSE_V4.",
     )
-    p.add_argument("--timesteps", type=int, default=500_000, help="Budżet kroków na *każde* środowisko w trybie suite")
+    p.add_argument(
+        "--timesteps",
+        type=int,
+        default=3_000_000,
+        help="Budżet kroków środowiska na jeden run (suite: ten sam budżet *na każde* env z FETCH_SPARSE_V4)",
+    )
     p.add_argument("--n-envs", type=int, default=4)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--lr", type=float, default=3e-4)
@@ -297,6 +460,49 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--eval-freq", type=int, default=10_000)
     p.add_argument("--n-eval-episodes", type=int, default=20)
     p.add_argument("--no-eval-callback", action="store_true")
+    p.add_argument(
+        "--no-early-stop",
+        action="store_true",
+        help="Wyłącza wczesne zatrzymanie — zawsze pełny budżet --timesteps.",
+    )
+    p.add_argument(
+        "--success-threshold",
+        type=float,
+        default=None,
+        metavar="P",
+        help=(
+            "Jednolity próg success_rate_final dla **wszystkich** envów (nadpisuje tabelę per-zadanie). "
+            "Bez tego argumentu: domyślna tabela progów w skrypcie + --early-stop-threshold-fallback "
+            "dla nieznanego --env-id."
+        ),
+    )
+    p.add_argument(
+        "--early-stop-threshold-fallback",
+        type=float,
+        default=0.75,
+        metavar="P",
+        help=(
+            "Próg early-stop, gdy --env-id nie ma wpisu w domyślnej tabeli i nie podano --success-threshold."
+        ),
+    )
+    p.add_argument(
+        "--early-stop-check-freq",
+        type=int,
+        default=25_000,
+        help="Co ile kroków sprawdzać próg (po --min-steps-before-early-stop).",
+    )
+    p.add_argument(
+        "--early-stop-eval-episodes",
+        type=int,
+        default=24,
+        help="Liczba epizodów w rollout_eval przy sprawdzaniu wczesnego stopu.",
+    )
+    p.add_argument(
+        "--min-steps-before-early-stop",
+        type=int,
+        default=150_000,
+        help="Minimalna liczba kroków zanim zaczniemy sprawdzać wczesny stop.",
+    )
     p.add_argument("--check-device", action="store_true")
     p.add_argument(
         "--suite-dir",
@@ -327,6 +533,12 @@ def main() -> None:
     cfg.goal_selection_strategy = args.goal_strategy
     cfg.eval_freq = args.eval_freq
     cfg.n_eval_episodes = args.n_eval_episodes
+    cfg.early_stop_enabled = not args.no_early_stop
+    cfg.early_stop_success_threshold_uniform = args.success_threshold
+    cfg.early_stop_success_threshold_fallback = args.early_stop_threshold_fallback
+    cfg.early_stop_check_freq = args.early_stop_check_freq
+    cfg.early_stop_eval_episodes = args.early_stop_eval_episodes
+    cfg.min_steps_before_early_stop = args.min_steps_before_early_stop
 
     envs: tuple[str, ...]
     if args.env_id:
