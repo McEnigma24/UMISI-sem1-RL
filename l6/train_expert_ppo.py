@@ -26,6 +26,8 @@ from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
+from sb3_log_progress import LogFileProgressCallback, use_sb3_interactive_progress_bar
+
 gym.register_envs(gymnasium_robotics)
 
 L6_ROOT = Path(__file__).resolve().parent
@@ -231,6 +233,10 @@ def train(
             )
         )
 
+    use_pbar = use_sb3_interactive_progress_bar()
+    if not use_pbar:
+        callbacks.append(LogFileProgressCallback())
+
     model = PPO(
         "MultiInputPolicy",
         train_env,
@@ -252,7 +258,7 @@ def train(
     model.learn(
         total_timesteps=cfg.total_timesteps,
         callback=callbacks if callbacks else None,
-        progress_bar=True,
+        progress_bar=use_pbar,
     )
 
     model_path = run_dir / "ppo_model.zip"

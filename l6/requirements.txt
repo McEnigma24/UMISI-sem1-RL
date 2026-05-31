@@ -3,6 +3,8 @@
 # (najpierw: uv python install 3.12 && uv venv)
 #
 # Pierwsza linia techniczna musi być --extra-index-url — stąd torch bierze build +cu124.
+# Bez tego pip często instaluje torch CPU-only i na węźle GPU i tak zobaczysz device=cpu.
+
 
 # --- środowisko MuJoCo / Fetch ---
 gymnasium==1.2.2

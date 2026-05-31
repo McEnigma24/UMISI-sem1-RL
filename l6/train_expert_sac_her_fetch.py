@@ -4,10 +4,12 @@ Ekspert SAC + HER na środowiskach Fetch (Gymnasium Robotics v4).
 SAC z ``HerReplayBuffer`` to standard z pracy Plappert et al. / benchmarków Fetch
 (lepszy niż samo PPO na rzadkiej nagrodzie).
 
-Domyślnie: **wczesne zatrzymanie**, gdy ``success_rate_final >= próg``; próg jest
-**osobny dla każdego Fetch** (łatwiejsze zadania = wyższy próg), z fallbackiem dla
+Domyślnie: **wczesne zatrzymanie**, gdy ``success_rate_final >= próg`` (własny ``rollout_eval``);
+pierwsze sprawdzenie od ``min_steps_before_early_stop``, potem co ``early_stop_check_freq``
+(startowe wartości w ``default_config()``; to samo ustawiają domyślne flagi CLI).
+Próg jest **osobny dla każdego Fetch** (łatwiejsze zadania = wyższy próg), z fallbackiem dla
 innych ``--env-id``. Opcjonalnie ``--success-threshold`` nadpisuje **wszystkie** envy
-jedną wartością. Bez progu — pełny budżet ``--timesteps`` (domyślnie 3M).
+jedną wartością. Pełny budżet: ``--timesteps`` (w skrypcie: ``MY_TIMESTEPS_LIMIT``).
 
 Przykłady:
   python train_expert_sac_her_fetch.py
@@ -34,6 +36,7 @@ from stable_baselines3.her import HerReplayBuffer
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 
+from sb3_log_progress import LogFileProgressCallback, use_sb3_interactive_progress_bar
 from train_expert_ppo import (
     allocate_run_dir,
     rollout_eval,
@@ -120,9 +123,11 @@ def default_config() -> SacHerFetchConfig:
         early_stop_enabled=True,
         early_stop_success_threshold_uniform=None,
         early_stop_success_threshold_fallback=0.75,
-        early_stop_check_freq=25_000,
+        # Częstszy rollout_eval + niski próg startu: sensowne przy łatwych env (np. Reach),
+        # żeby nie mielić do pełnego budżetu; trudniejsze Fetch — ewentualnie podnieś min_steps / check_freq z CLI.
+        early_stop_check_freq=5_000,
         early_stop_eval_episodes=24,
-        min_steps_before_early_stop=150_000,
+        min_steps_before_early_stop=6_000,
     )
 
 
@@ -297,13 +302,21 @@ def train_sac_her_one_env(
     if cfg.early_stop_enabled:
         print(
             f"  Early stop: success_rate_final >= {stop_thr:.3f} "
-            f"({thr_src}; rollout_eval co {cfg.early_stop_check_freq} kroków po {cfg.min_steps_before_early_stop})"
+            f"({thr_src}; rollout_eval co {cfg.early_stop_check_freq} kroków, "
+            f"pierwsza kontrola od num_timesteps >= {cfg.min_steps_before_early_stop:_})."
+        )
+        print(
+            f"  Log SB3 „Eval num_timesteps=… / Success rate” = EvalCallback co {cfg.eval_freq:_} kroków "
+            "(osobna ewaluacja; może pokazać wysoki % zanim w ogóle ruszy early-stop)."
         )
 
     train_env = make_vec_env(env_id, cfg.n_envs)
     eval_env = make_vec_env(env_id, 1)
 
+    use_pbar = use_sb3_interactive_progress_bar()
     callbacks: list[BaseCallback] = [FetchEpisodeTensorboardCallback()]
+    if not use_pbar:
+        callbacks.append(LogFileProgressCallback())
     if not no_eval_callback:
         callbacks.append(
             EvalCallback(
@@ -356,7 +369,7 @@ def train_sac_her_one_env(
     model.learn(
         total_timesteps=cfg.timesteps,
         callback=callbacks if callbacks else None,
-        progress_bar=True,
+        progress_bar=use_pbar,
         log_interval=10,
     )
 
@@ -489,7 +502,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--early-stop-check-freq",
         type=int,
-        default=25_000,
+        default=default_config().early_stop_check_freq,
         help="Co ile kroków sprawdzać próg (po --min-steps-before-early-stop).",
     )
     p.add_argument(
@@ -501,7 +514,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--min-steps-before-early-stop",
         type=int,
-        default=150_000,
+        default=default_config().min_steps_before_early_stop,
         help="Minimalna liczba kroków zanim zaczniemy sprawdzać wczesny stop.",
     )
     p.add_argument("--check-device", action="store_true")

@@ -1,0 +1,56 @@
+{
+  "format_version": 1,
+  "algo": "SAC+HER",
+  "policy_class": "MultiInputPolicy",
+  "env_id": "FetchReach-v4",
+  "device": "cuda",
+  "train_config": {
+    "timesteps": 1500000,
+    "n_envs": 4,
+    "seed": 0,
+    "learning_rate": 0.0003,
+    "buffer_size": 1000000,
+    "learning_starts": 10000,
+    "batch_size": 256,
+    "tau": 0.005,
+    "gamma": 0.98,
+    "train_freq": 1,
+    "gradient_steps": 1,
+    "n_sampled_goal": 4,
+    "goal_selection_strategy": "future",
+    "eval_freq": 10000,
+    "n_eval_episodes": 20,
+    "policy_net_arch": [
+      256,
+      256,
+      256
+    ],
+    "early_stop_enabled": true,
+    "early_stop_success_threshold_uniform": null,
+    "early_stop_success_threshold_fallback": 0.75,
+    "early_stop_check_freq": 5000,
+    "early_stop_eval_episodes": 24,
+    "min_steps_before_early_stop": 6000
+  },
+  "training": {
+    "requested_timesteps": 1500000,
+    "actual_timesteps": 35000,
+    "early_stop_enabled": true,
+    "stopped_early": true,
+    "stop_at_timesteps": 35000,
+    "early_stop_success_threshold_resolved": 0.95,
+    "early_stop_success_threshold_source": "builtin_table"
+  },
+  "post_train_eval": {
+    "mean_return": -2.2333333333333334,
+    "mean_length": 50.0,
+    "success_rate_final": 1.0,
+    "success_rate_any": 1.0,
+    "mean_final_goal_dist": 0.01590488546113018
+  },
+  "artifacts": {
+    "model": "sac_her_model.zip",
+    "tensorboard": "tensorboard",
+    "best_model_dir": "best"
+  }
+}
