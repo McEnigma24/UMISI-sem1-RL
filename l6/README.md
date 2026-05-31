@@ -59,3 +59,25 @@ python train_expert_ppo.py --eval-only weights\...\ppo_model.zip
 ```
 
 Fetch ma nagrodę rzadką — przy słabym sukcesie zwiększ `--timesteps` lub rozważ `FetchPickAndPlaceDense-v4` (inny `env_id`, nagroda gęsta). W Gymnasium **v3** jest oznaczone jako deprecated — domyślnie używamy **v4**.
+
+---
+
+## Trening eksperta (SAC + HER — zalecane na Fetch)
+
+Skrypt **[`train_expert_sac_her_fetch.py`](train_expert_sac_her_fetch.py)** — **SAC** z **`HerReplayBuffer`** (Hindsight Experience Replay), **`MultiInputPolicy`**. To setup zbliżony do benchmarków z literatury dla środowisk goal-conditioned (lepszy niż samo PPO na sparse).
+
+- **Domyślnie** trenuje **po kolei** na czterech środowiskach **sparse v4**: `FetchReach-v4`, `FetchPush-v4`, `FetchSlide-v4`, `FetchPickAndPlace-v4` (osobny folder / checkpoint na env).
+- **TensorBoard**: dla każdego env logi w `.../<env>/tensorboard/` — wbudowane metryki SAC (straty, `ent_coef`, Q itd.) + prefix **`fetch/`** (zwrot i długość epizodu, `is_success`, średnie kroczące).
+- Zapis: `weights/<timestamp>_sac_her_fetch_suite/<EnvId>/` (`sac_her_model.zip`, `manifest.json`, `best/`) oraz zbiorczy **`manifest_suite.json`**.
+
+```powershell
+python train_expert_sac_her_fetch.py --timesteps 500_000
+python train_expert_sac_her_fetch.py --env-id FetchPickAndPlace-v4 --timesteps 1_000_000
+python train_expert_sac_her_fetch.py --check-device
+```
+
+Podgląd logów (cały suite naraz):
+
+```powershell
+tensorboard --logdir weights\<data>_sac_her_fetch_suite
+```

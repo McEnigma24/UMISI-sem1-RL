@@ -124,45 +124,79 @@ def allocate_run_dir(root: Path) -> Path:
     return run
 
 
-def success_rate(
-    model: PPO,
+@dataclass
+class RolloutEvalResult:
+    """Metryki z rolloutów ewaluacyjnych (pojedyncze środowisko, bez VecEnv)."""
+
+    mean_return: float
+    mean_length: float
+    # ``is_success`` w Gymnasium-Robotics jest w ``info`` przy *każdym* kroku
+    # (patrz ``robot_env.py``). Poniżej dwa sensowne agregaty:
+    success_rate_final: float  # ułamek epizodów z sukcesem w *ostatnim* kroku (typowe przy TimeLimit)
+    success_rate_any: float  # ułamek epizodów, w których *kiedykolwiek* był sukces w trakcie epizodu
+    mean_final_goal_dist: float  # śr. ||achieved_goal - desired_goal||_2 na końcu epizodu (metryki pomocniczej)
+
+
+def _is_success_scalar(info: dict[str, Any]) -> bool:
+    s = info.get("is_success")
+    if s is None:
+        return False
+    return float(np.asarray(s).reshape(-1)[0]) >= 0.5
+
+
+def rollout_eval(
+    model: Any,
     env_id: str,
     *,
     n_episodes: int,
     seed: int,
     deterministic: bool = True,
-) -> tuple[float, float, float]:
+) -> RolloutEvalResult:
     """
-    Średni zwrot, średnia długość epizodu, ułamek sukcesów (``info['is_success']``).
+    Ewaluacja zgodna z ``GoalEnv`` / Fetch: nagroda sparse to zwykle suma -1 na krok poza celem
+    (stąd zwrot ok. -50 przy horyzoncie 50 bez sukcesu — to nie musi być „błąd liczenia”).
     """
     env = gym.make(env_id)
-    successes = 0
+    success_final = 0
+    success_any = 0
     returns: list[float] = []
     lengths: list[float] = []
+    final_dists: list[float] = []
 
     for ep in range(n_episodes):
         obs, _ = env.reset(seed=seed + ep)
         done = False
         total = 0.0
         steps = 0
+        any_success = False
         while not done:
             action, _ = model.predict(obs, deterministic=deterministic)
             obs, rew, terminated, truncated, info = env.step(action)
             total += float(rew)
             steps += 1
+            if _is_success_scalar(info):
+                any_success = True
             done = terminated or truncated
             if done:
-                s = info.get("is_success")
-                if s is not None and float(np.asarray(s).reshape(-1)[0]) >= 0.5:
-                    successes += 1
+                if _is_success_scalar(info):
+                    success_final += 1
+                if any_success:
+                    success_any += 1
                 returns.append(total)
                 lengths.append(float(steps))
+                ag = np.asarray(obs["achieved_goal"], dtype=np.float64).reshape(-1)
+                dg = np.asarray(obs["desired_goal"], dtype=np.float64).reshape(-1)
+                final_dists.append(float(np.linalg.norm(ag - dg)))
 
     env.close()
-    mean_ret = float(np.mean(returns)) if returns else 0.0
-    mean_len = float(np.mean(lengths)) if lengths else 0.0
-    rate = successes / n_episodes if n_episodes else 0.0
-    return mean_ret, mean_len, rate
+    n = float(n_episodes) if n_episodes else 1.0
+    return RolloutEvalResult(
+        mean_return=float(np.mean(returns)) if returns else 0.0,
+        mean_length=float(np.mean(lengths)) if lengths else 0.0,
+        success_rate_final=success_final / n,
+        success_rate_any=success_any / n,
+        mean_final_goal_dist=float(np.mean(final_dists)) if final_dists else 0.0,
+    )
 
 
 def train(
@@ -224,7 +258,7 @@ def train(
     model_path = run_dir / "ppo_model.zip"
     model.save(str(model_path))
 
-    mean_ret, mean_len, succ = success_rate(
+    metrics = rollout_eval(
         model,
         cfg.env_id,
         n_episodes=30,
@@ -241,9 +275,16 @@ def train(
         "train_config": asdict(cfg),
         "post_train_eval": {
             "n_episodes": 30,
-            "mean_episode_return": mean_ret,
-            "mean_episode_length": mean_len,
-            "success_rate": succ,
+            "mean_episode_return": metrics.mean_return,
+            "mean_episode_length": metrics.mean_length,
+            "success_rate_final": metrics.success_rate_final,
+            "success_rate_any": metrics.success_rate_any,
+            "mean_final_goal_dist_m": metrics.mean_final_goal_dist,
+            "eval_notes": (
+                "success_rate_final: is_success w ostatnim kroku epizodu (Fetch: często truncation @50). "
+                "success_rate_any: sukces w dowolnym kroku. PPO na sparse Fetch bez HER bywa słabe — "
+                "porównaj z literaturą (HER+off-policy)."
+            ),
         },
         "artifacts": {
             "model": model_path.name,
@@ -261,14 +302,17 @@ def train(
     print(f"Zapisano: {model_path}")
     print(f"manifest: {run_dir / 'manifest.json'}")
     print(
-        f"Krótka ewaluacja (30 ep.): return={mean_ret:.3f}, len={mean_len:.1f}, success_rate={succ:.3f}"
+        "Krótka ewaluacja (30 ep.): "
+        f"return={metrics.mean_return:.3f}, len={metrics.mean_length:.1f}, "
+        f"success_final={metrics.success_rate_final:.3f}, success_any={metrics.success_rate_any:.3f}, "
+        f"mean_final_dist_m={metrics.mean_final_goal_dist:.4f}"
     )
     return run_dir
 
 
 def eval_only(model_path: Path, env_id: str, n_episodes: int, seed: int) -> None:
     model = PPO.load(str(model_path), device=resolve_device())
-    mean_ret, mean_len, succ = success_rate(
+    m = rollout_eval(
         model,
         env_id,
         n_episodes=n_episodes,
@@ -277,7 +321,12 @@ def eval_only(model_path: Path, env_id: str, n_episodes: int, seed: int) -> None
     )
     print(
         f"{env_id} | {model_path}\n"
-        f"  mean_return={mean_ret:.3f}, mean_len={mean_len:.1f}, success_rate={succ:.3f} ({n_episodes} ep.)"
+        f"  mean_return={m.mean_return:.3f}, mean_len={m.mean_length:.1f} ({n_episodes} ep.)\n"
+        f"  success_final={m.success_rate_final:.3f}  (is_success w ostatnim kroku)\n"
+        f"  success_any  ={m.success_rate_any:.3f}  (sukces w dowolnym kroku epizodu)\n"
+        f"  mean_final_goal_dist_m={m.mean_final_goal_dist:.4f}  (||achieved-desired||_2 na końcu)\n"
+        "  Uwaga: Fetch sparse daje ~-1/step poza celem → zwrot ~-50 przy pełnym horyzoncie bez trafienia; "
+        "to nie błąd sumowania. PPO bez HER często ma niski sukces — benchmarki często używają HER+SAC/DDPG."
     )
 
 
