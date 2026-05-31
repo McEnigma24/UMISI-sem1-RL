@@ -64,27 +64,51 @@ Fetch ma nagrodę rzadką — przy słabym sukcesie zwiększ `--timesteps` lub r
 
 ## Trening eksperta (SAC + HER — zalecane na Fetch)
 
-Skrypt **[`train_expert_sac_her_fetch.py`](train_expert_sac_her_fetch.py)** — **SAC** z **`HerReplayBuffer`** (Hindsight Experience Replay), **`MultiInputPolicy`**. To setup zbliżony do benchmarków z literatury dla środowisk goal-conditioned (lepszy niż samo PPO na sparse).
+Skrypt **[`train_expert_sac_her_fetch.py`](train_expert_sac_her_fetch.py)** — **SAC** z **`HerReplayBuffer`**, **`MultiInputPolicy`**.
 
-- **Domyślnie** trenuje **po kolei** na czterech środowiskach **sparse v4**: `FetchReach-v4`, `FetchPush-v4`, `FetchSlide-v4`, `FetchPickAndPlace-v4` (osobny folder / checkpoint na env).
-- **TensorBoard**: dla każdego env logi w `.../<env>/tensorboard/` — wbudowane metryki SAC (straty, `ent_coef`, Q itd.) + prefix **`fetch/`** (zwrot i długość epizodu, `is_success`, średnie kroczące).
-- Zapis: `weights/<timestamp>_sac_her_fetch_suite/<EnvId>/` (`sac_her_model.zip`, `manifest.json`, `best/`) oraz zbiorczy **`manifest_suite.json`**.
-- **Wczesny stop**: po `min_steps_before_early_stop` (domyślnie 150k) co `early_stop_check_freq` kroków — `rollout_eval`; warunek `success_rate_final >= próg`. **Domyślnie próg jest inny dla każdego Fetch** (stała `DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV` w skrypcie): Reach **0.93**, Push **0.78**, Slide **0.66**, PickAndPlace **0.62** (amatorski poziom vs. często ~0.9+ w mocnych runach). Dla nieznanego `--env-id` używany jest **`--early-stop-threshold-fallback`** (domyślnie **0.75**). **`--success-threshold P`** ustawia **jeden** próg dla wszystkich envów (nadpisuje tabelę). Pełny budżet bez progu: `--no-early-stop`. W `manifest.json` → `training.early_stop_success_threshold_resolved` i `..._source`.
+### Gdzie zapisujemy wagi (domyślnie: `weights/besties/`)
+
+- **Bez** `--fresh-run-dir`: jeden katalog akumulacji (domyślnie `weights/besties` względem `l6/`), podkatalog **per env**, np. `besties/FetchReach-v4/`. Kolejne joby na LSC dopisują checkpointy i nadpisują `sac_her_model.zip` po treningu.
+- **`--fresh-run-dir`**: poprzednie zachowanie — nowy timestamp pod `weights/` (suite) albo `allocate_run_dir` dla pojedynczego env.
+- **`--suite-dir PATH`**: własny root (np. projekt na SCRATCH); layout `use_subdir` jak wcześniej dla wielu envów.
+
+W każdym katalogu env: `tensorboard/`, `best/` (EvalCallback), `checkpoints/` (okresowe `.zip`), `latest/sac_her_resume.zip` (kopia do wznowienia), `manifest.json`, opcjonalnie **`quality_metadata.json`**.
+
+### Wczesny stop (streak) i certyfikacja
+
+- Po `min_steps_before_early_stop` co `early_stop_check_freq` kroków: `rollout_eval`; warunek passu: `success_rate_final >= próg`.
+- **`--early-stop-streak K`**: wymagane **K kolejnych** passów z rzędu; jeden słabszy rollout zeruje licznik. Dopiero wtedy trening się kończy (przed pełnym `--timesteps`).
+- Progi per env w stałej `DEFAULT_EARLY_STOP_SUCCESS_THRESHOLD_BY_ENV` w skrypcie (m.in. Reach **0.95**, Push **0.85** …); **`--success-threshold`** nadpisuje jednym progiem; **`--early-stop-threshold-fallback`** dla nieznanego `env_id`. **`--no-early-stop`**: pełny budżet, brak logiki streak / certyfikacji skip.
+
+### `quality_metadata.json` (reconcile)
+
+- Certyfikat zapisuje się **tuż po** zapisaniu `sac_her_model.zip` (przed długim `rollout_eval` 30 ep.) — wcześniejsza kolejność mogła gubić plik przy błędzie ewaluacji lub killu Slurm. Bloki: `criteria` (próg z tolerancją float, streak, częstotliwości, `early_stop_enabled`, …) i `certification` (streak, metryki ostatniego rolloutu early-stop, `artifact_primary`).
+- Na starcie: w logu widać `quality_metadata.json: … (istnieje: …)`. **`[skip]`** gdy (poza streakiem) `criteria` się zgadzają, certyfikat kompletny, plik wag istnieje oraz **H ≥ max(K_file, K_now)** — np. w pliku K_file=10 i H=10, a w kodzie K_now=5 → nadal OK (wcześniej trudniejszy wymóg). Inaczej: `[reconcile]` i dalszy trening.
+- Suite: przy każdym `lsc_run` skrypt przechodzi **wszystkie cztery** envy z `FETCH_SPARSE_V4` (log `[suite] (i/4) …`); dla każdego osobno skip / resume / start.
+
+### Checkpointy i resume
+
+- Domyślnie **`CheckpointCallback`**: co `--checkpoint-save-freq` kroków środowiska (wewnętrznie `/ n_envs` dla SB3). **`--no-checkpoints`**: wyłącza. **`--checkpoint-save-replay-buffer`**: duże pliki (replay w `.zip`).
+- **`--resume PATH`**: wymusza plik wag (tylko przy **jednym** env; przy suite ignorowane — każde env ma własne `latest/`).
+- **`--additional-timesteps N`**: po wczytaniu checkpointu uczy do `num_timesteps + N`.
+
+Domyślny budżet kroków na env: stała **`MY_TIMESTEPS_LIMIT`** w skrypcie (obecnie 1_500_000), nadpisywana przez **`--timesteps`**.
 
 ```powershell
 python train_expert_sac_her_fetch.py
 python train_expert_sac_her_fetch.py --env-id FetchPickAndPlace-v4
-python train_expert_sac_her_fetch.py --timesteps 5_000_000
-python train_expert_sac_her_fetch.py --success-threshold 0.85
-python train_expert_sac_her_fetch.py --early-stop-threshold-fallback 0.7
+python train_expert_sac_her_fetch.py --fresh-run-dir
+python train_expert_sac_her_fetch.py --accumulate-dir weights/moj_zbior
+python train_expert_sac_her_fetch.py --early-stop-streak 10 --min-steps-before-early-stop 6000
+python train_expert_sac_her_fetch.py --resume weights/besties/FetchReach-v4/latest/sac_her_resume.zip
 python train_expert_sac_her_fetch.py --no-early-stop
 python train_expert_sac_her_fetch.py --check-device
 ```
 
-Domyślnie **3_000_000** kroków **na każde** środowisko w suite (łącznie ~12M kroków na cztery Fetch — długo, ale sensownie pod „eksperta”), o ile wczesny stop nie skróci danego env. Zawsze zweryfikuj `--eval-only` / `success_*` w `manifest.json`.
+Zbiorczy **`manifest_suite.json`** w root (`besties/` lub katalogu timestamp) — w polu `runs` są wpisy z treningu lub `skipped: true` po skipie.
 
-Podgląd logów (cały suite naraz):
+Podgląd TensorBoard (cały zestaw pod `besties/`):
 
 ```powershell
-tensorboard --logdir weights\<data>_sac_her_fetch_suite
+tensorboard --logdir weights/besties
 ```

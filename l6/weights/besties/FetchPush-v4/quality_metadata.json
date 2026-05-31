@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "spec_version": 1,
+    "env_id": "FetchPush-v4",
+    "early_stop_enabled": true,
+    "success_threshold": 0.85,
+    "early_stop_streak_required": 5,
+    "early_stop_check_freq": 5000,
+    "min_steps_before_early_stop": 6000,
+    "early_stop_eval_episodes": 24
+  },
+  "certification": {
+    "certified": true,
+    "consecutive_hits_achieved": 5,
+    "last_eval_success_rate_final": 0.9166666666666666,
+    "last_eval_success_rate_any": 0.9583333333333334,
+    "mean_return": -14.208333333333334,
+    "mean_length": 50.0,
+    "mean_final_goal_dist_m": 0.046250540202275446,
+    "certified_at_num_timesteps": 25000,
+    "artifact_primary": "sac_her_model.zip"
+  }
+}

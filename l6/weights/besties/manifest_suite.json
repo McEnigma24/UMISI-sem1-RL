@@ -1,0 +1,79 @@
+{
+  "format_version": 1,
+  "algo": "SAC+HER",
+  "fetch_envs_order": [
+    "FetchReach-v4",
+    "FetchPush-v4",
+    "FetchSlide-v4",
+    "FetchPickAndPlace-v4"
+  ],
+  "parent_dir": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties",
+  "runs": [
+    {
+      "env_id": "FetchReach-v4",
+      "run_dir": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchReach-v4",
+      "model": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchReach-v4/sac_her_model.zip",
+      "metrics": {
+        "mean_return": -1.8333333333333333,
+        "mean_length": 50.0,
+        "success_rate_final": 1.0,
+        "success_rate_any": 1.0,
+        "mean_final_goal_dist": 0.00872394952599304
+      },
+      "actual_timesteps": 50000,
+      "stopped_early": false,
+      "stop_at_timesteps": null,
+      "skipped": true,
+      "skip_reason": "already_certified"
+    },
+    {
+      "env_id": "FetchPush-v4",
+      "run_dir": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPush-v4",
+      "model": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPush-v4/sac_her_model.zip",
+      "metrics": {
+        "mean_return": -14.208333333333334,
+        "mean_length": 50.0,
+        "success_rate_final": 0.9166666666666666,
+        "success_rate_any": 0.9583333333333334,
+        "mean_final_goal_dist": 0.046250540202275446
+      },
+      "actual_timesteps": 25000,
+      "stopped_early": false,
+      "stop_at_timesteps": null,
+      "skipped": true,
+      "skip_reason": "already_certified"
+    },
+    {
+      "env_id": "FetchSlide-v4",
+      "run_dir": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchSlide-v4",
+      "model": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchSlide-v4/sac_her_model.zip",
+      "metrics": {
+        "mean_return": -29.6,
+        "mean_length": 50.0,
+        "success_rate_final": 0.7,
+        "success_rate_any": 0.7333333333333333,
+        "mean_final_goal_dist": 0.04617786292319156
+      },
+      "actual_timesteps": 6000,
+      "stopped_early": true,
+      "stop_at_timesteps": 6000,
+      "skipped": false
+    },
+    {
+      "env_id": "FetchPickAndPlace-v4",
+      "run_dir": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4",
+      "model": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/sac_her_model.zip",
+      "metrics": {
+        "mean_return": -38.06666666666667,
+        "mean_length": 50.0,
+        "success_rate_final": 0.3,
+        "success_rate_any": 0.4,
+        "mean_final_goal_dist": 0.2087614662157853
+      },
+      "actual_timesteps": 600000,
+      "stopped_early": true,
+      "stop_at_timesteps": 600000,
+      "skipped": false
+    }
+  ]
+}

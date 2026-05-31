@@ -1,0 +1,23 @@
+{
+  "criteria": {
+    "spec_version": 1,
+    "env_id": "FetchPickAndPlace-v4",
+    "early_stop_enabled": true,
+    "success_threshold": 0.5,
+    "early_stop_streak_required": 1,
+    "early_stop_check_freq": 5000,
+    "min_steps_before_early_stop": 6000,
+    "early_stop_eval_episodes": 24
+  },
+  "certification": {
+    "certified": true,
+    "consecutive_hits_achieved": 1,
+    "last_eval_success_rate_final": 0.5,
+    "last_eval_success_rate_any": 0.625,
+    "mean_return": -31.5,
+    "mean_length": 50.0,
+    "mean_final_goal_dist_m": 0.0991204571743346,
+    "certified_at_num_timesteps": 600000,
+    "artifact_primary": "sac_her_model.zip"
+  }
+}
