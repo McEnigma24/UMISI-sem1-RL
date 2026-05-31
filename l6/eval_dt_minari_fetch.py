@@ -6,14 +6,15 @@ Writes ``eval_metrics.json`` for ``plot_dt_vs_baseline.py``.
 
 Example:
 
-  python eval_dt_minari_fetch.py --model dt_weights/2026-05-30_22-52/dt_model.pth \\
-      --manifest dt_weights/2026-05-30_22-52/manifest.json \\
-      --baseline-model weights/2026-05-30_22-52/sac_her_model.zip --n-episodes 50
+  python eval_dt_minari_fetch.py --model dt_weights/.../dt_model.pth \\
+      --manifest dt_weights/.../manifest.json
+  # baseline: auto z minari_recordings lub L6_EVAL_BASELINE_MODEL / --baseline-model
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -76,6 +77,101 @@ def resolve_env_id(manifest: dict[str, Any], model_blob: dict[str, Any], cli: st
     return str(e)
 
 
+def find_expert_zip_from_minari_recordings(dataset_id: str) -> Path | None:
+    """
+    Szuka ``minari_recordings/<run>/manifest.json`` z tym samym ``minari_dataset_id``
+    co dataset treningowy DT i zwraca ``model_path`` do zipa SB3, jeśli plik istnieje.
+    Wybiera najnowszy run po nazwie katalogu (timestamp w sortowaniu).
+    """
+    root = L6_ROOT / "minari_recordings"
+    if not root.is_dir():
+        return None
+    candidates: list[tuple[str, Path]] = []
+    for sub in root.iterdir():
+        if not sub.is_dir():
+            continue
+        mp = sub / "manifest.json"
+        if not mp.is_file():
+            continue
+        try:
+            rec = json.loads(mp.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if rec.get("minari_dataset_id") != dataset_id:
+            continue
+        zp = rec.get("model_path")
+        if not zp:
+            continue
+        p = Path(str(zp)).expanduser().resolve()
+        if p.is_file():
+            candidates.append((sub.name, p))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda t: t[0], reverse=True)
+    return candidates[0][1]
+
+
+def resolve_baseline_model_path(
+    *,
+    train_manifest: dict[str, Any],
+    cli_path: Path | None,
+    recording_manifest: Path | None,
+    no_baseline: bool,
+) -> tuple[Path | None, str]:
+    """Zwraca (ścieżka_zip, opis_źródła) lub (None, powód)."""
+    if no_baseline:
+        return None, "no_baseline_flag"
+    if cli_path is not None:
+        p = cli_path.expanduser().resolve()
+        if not p.is_file():
+            raise SystemExit(f"Brak pliku --baseline-model: {p}")
+        return p, "cli"
+    envp = os.environ.get("L6_EVAL_BASELINE_MODEL", "").strip()
+    if envp:
+        p = Path(envp).expanduser().resolve()
+        if p.is_file():
+            return p, "env_L6_EVAL_BASELINE_MODEL"
+        return None, f"env_path_missing:{p}"
+    if recording_manifest is not None:
+        rm = load_manifest(recording_manifest.expanduser().resolve())
+        zp = rm.get("model_path")
+        if zp:
+            p = Path(str(zp)).expanduser().resolve()
+            if p.is_file():
+                return p, "recording_manifest_cli"
+        return None, "recording_manifest_no_zip"
+    did = train_manifest.get("dataset_id")
+    if isinstance(did, str) and did:
+        p = find_expert_zip_from_minari_recordings(did)
+        if p is not None:
+            return p, "minari_recordings_auto"
+        return None, f"minari_recordings_no_file_for_dataset:{did}"
+    return None, "no_dataset_id_in_train_manifest"
+
+
+def infer_target_return_from_minari_manifest(manifest: dict[str, Any]) -> float | None:
+    """Percentyl 90 / max zwrotu epizodów z datasetu Minari (jak train_dt) — sensowny RTG przy sparse reward."""
+    did = manifest.get("dataset_id")
+    root = manifest.get("minari_datasets_root")
+    if not did or not root:
+        return None
+    import os
+
+    import minari
+
+    os.environ["MINARI_DATASETS_PATH"] = str(Path(str(root)).resolve())
+    ds = minari.load_dataset(str(did))
+    n = min(512, len(ds))
+    if n <= 0:
+        return None
+    rets = [float(np.sum(np.asarray(ds[i].rewards, dtype=np.float64))) for i in range(n)]
+    p90 = float(np.percentile(rets, 90))
+    mx = float(np.max(rets))
+    if mx <= 0.0:
+        return float(max(0.0, p90))
+    return float(max(p90, mx))
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Online eval nanoDT (Fetch Dict) + optional SB3 baseline")
     p.add_argument("--model", type=Path, required=True, help="Ścieżka do dt_model.pth")
@@ -100,13 +196,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--target-return",
         type=float,
         default=None,
-        help="RTG dla agent.reset(); None = heurystyka z manifest hyperparams jeśli jest",
+        help="RTG dla agent.reset(); None = z Minari (p90/max zwrotu) jeśli manifest ma dataset_id, inaczej hyperparams / 50",
     )
     p.add_argument(
         "--baseline-model",
         type=Path,
         default=None,
-        help="Opcjonalnie .zip SB3 (SAC/PPO) — ten sam env i n_episodes",
+        help="Zip SB3 eksperta; jeśli pominięte — szukamy zipa w minari_recordings (ten sam dataset_id) lub L6_EVAL_BASELINE_MODEL",
+    )
+    p.add_argument(
+        "--recording-manifest",
+        type=Path,
+        default=None,
+        help="Bezpośrednio manifest.json z nagrania Minari (model_path do zipa SB3)",
+    )
+    p.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="Wyłącz automatyczne szukanie baseline (tylko metryki DT)",
     )
     p.add_argument(
         "--baseline-algo",
@@ -137,11 +244,16 @@ def main() -> None:
 
     target = args.target_return
     if target is None:
-        hp = manifest.get("hyperparams") or {}
-        if isinstance(hp, dict) and hp.get("online_eval_target_return") is not None:
-            target = float(hp["online_eval_target_return"])
+        inferred = infer_target_return_from_minari_manifest(manifest) if manifest else None
+        if inferred is not None:
+            target = inferred
+            print(f"target_return (Minari p90/max): {target:.4g}", file=sys.stderr)
         else:
-            target = 50.0
+            hp = manifest.get("hyperparams") or {}
+            if isinstance(hp, dict) and hp.get("online_eval_target_return") is not None:
+                target = float(hp["online_eval_target_return"])
+            else:
+                target = 50.0
 
     device = args.device
     if device == "cuda" and not torch.cuda.is_available():
@@ -161,11 +273,21 @@ def main() -> None:
 
     baseline_result: RolloutEvalResult | None = None
     baseline_label: str | None = None
-    if args.baseline_model is not None:
+    baseline_zip: Path | None = None
+    baseline_how: str = "none"
+    bpath, baseline_how = resolve_baseline_model_path(
+        train_manifest=manifest,
+        cli_path=args.baseline_model,
+        recording_manifest=args.recording_manifest,
+        no_baseline=args.no_baseline,
+    )
+    if bpath is not None:
+        baseline_zip = bpath
+        print(f"Baseline zip ({baseline_how}): {baseline_zip}", file=sys.stderr)
         load_env = gym.make(env_id)
         try:
             sb3, baseline_label = load_sb3_model(
-                args.baseline_model.expanduser().resolve(),
+                baseline_zip,
                 args.baseline_algo,
                 env=load_env,
             )
@@ -178,6 +300,12 @@ def main() -> None:
             seed=args.seed,
             deterministic=True,
         )
+    else:
+        print(
+            f"Uwaga: brak baseline ({baseline_how}) — w wykresie tylko DT. "
+            "Ustaw L6_EVAL_BASELINE_MODEL, --baseline-model lub dopasuj minari_recordings.",
+            file=sys.stderr,
+        )
 
     payload: dict[str, Any] = {
         "format_version": 1,
@@ -189,6 +317,8 @@ def main() -> None:
         "dt": rollout_result_to_jsonable(dt_result),
         "baseline": rollout_result_to_jsonable(baseline_result) if baseline_result else None,
         "baseline_algo": baseline_label,
+        "baseline_model_path": str(baseline_zip) if baseline_zip else None,
+        "baseline_resolution": baseline_how,
         "model_path": str(model_path),
     }
 

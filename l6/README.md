@@ -159,14 +159,14 @@ python train_dt_minari_fetch.py --dataset-id l6/fetchreach-v4/expert-sac-v0 --ma
 - **Krótki rollout w env** (wolniejszy trening): **`--online-eval-every-iters`** + **`--online-eval-episodes`** — najlepiej gdy okres jest współdzielny z `--eval-interval` (inaczej online eval uruchomi się tylko przy iteracjach spełniających oba moduły). RTG: **`--online-eval-target-return`** (domyślnie heurystyka ze średniego zwrotu w próbce epizodów z Minari).
 - **Stop po sukcesie online**: **`--early-stop-success-min`** (np. `0.95`) — gdy `success_rate_final` z rolloutu ≥ próg.
 - **Stop przy słabym sukcesie**: **`--early-stop-success-max`** + **`--early-stop-success-patience`** — gdy przez tyle kolejnych **online** evalów `success_rate_final` ≤ max.
-- **Checkpointy pośrednie**: **`--save-every-iters`** — pliki `ckpt_iter_########.pth` w tym samym katalogu co `dt_model.pth` (format jak `NanoDTAgent.save`).
+- **Checkpointy pośrednie**: **`--save-every-iters`** — pliki `ckpt_iter_########.pth` w tym samym katalogu co `dt_model.pth` (format jak `NanoDTAgent.save`, plus pola `minari_dataset_id`, `env_id`, `flat_observation_keys`, `checkpoint_iter`, `checkpoint_kind`).
 
 W **`manifest.json`** i w dopisanych polach **`dt_model.pth`** znajdziesz m.in. `early_stop`, `env_id`, `flat_observation_keys`, `minari_dataset_id`.
 
 ### Ewaluacja online DT + baseline i wykresy
 
-1. **[`eval_dt_minari_fetch.py`](eval_dt_minari_fetch.py)** — rollout DT z poprawnym `act(..., rew=...)`; opcjonalnie ten sam `env_id` / `n_episodes` dla checkpointu SB3 (`--baseline-model`, `--baseline-algo`). Wynik: **`eval_metrics.json`** (np. w `dt_eval_runs/<timestamp>/`).
-2. **[`plot_dt_vs_baseline.py`](plot_dt_vs_baseline.py)** — słupki metryk z JSON (domyślnie `figures/dt_vs_baseline.png` obok pliku wejściowego).
+1. **[`eval_dt_minari_fetch.py`](eval_dt_minari_fetch.py)** — rollout DT z poprawnym `act(..., rew=...)`; **baseline SB3 domyślnie szukany automatycznie**: zip z `minari_recordings/*/manifest.json` z tym samym `minari_dataset_id` co w manifeście treningu (najnowszy run), albo zmienna środowiskowa **`L6_EVAL_BASELINE_MODEL`**, albo **`--baseline-model`**. Wyłączenie: **`--no-baseline`**. Wynik: **`eval_metrics.json`** (np. w `dt_eval_runs/<timestamp>/`).
+2. **[`plot_dt_vs_baseline.py`](plot_dt_vs_baseline.py)** — siatka małych wykresów (jedna metryka = jedna skala osi Y), żeby np. success 0–1 nie ginął przy mean_return ~ −50; domyślnie `figures/dt_vs_baseline.png` obok JSON.
 
 ```powershell
 python eval_dt_minari_fetch.py --model dt_weights\...\dt_model.pth --manifest dt_weights\...\manifest.json `

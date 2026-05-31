@@ -1,0 +1,46 @@
+{
+  "format_version": 1,
+  "nanodt_version": "0.1.0",
+  "dataset_id": "l6/fetchreach-v4/expert-sac-v0",
+  "minari_datasets_root": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\minari_datasets",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "env_id": "FetchReach-v4",
+  "device": "cpu",
+  "seed": 42,
+  "early_stop": {
+    "stop_reason": "unknown",
+    "finished_iter": 0,
+    "eval_history_tail": []
+  },
+  "hyperparams": {
+    "max_iters": 120,
+    "batch_size": 32,
+    "eval_interval": 60,
+    "eval_iters": 10,
+    "log_interval": 60,
+    "reward_scale": 1000.0,
+    "K": 20,
+    "max_ep_len": 128,
+    "n_layer": 3,
+    "n_head": 1,
+    "n_embd": 128,
+    "dropout": 0.1,
+    "early_stop_patience": null,
+    "early_stop_loss_max": null,
+    "early_stop_on": "val",
+    "early_stop_plateau_epsilon": null,
+    "early_stop_plateau_window": null,
+    "online_eval_every_iters": null,
+    "online_eval_episodes": 10,
+    "online_eval_target_return": 1.0,
+    "early_stop_success_min": null,
+    "early_stop_success_max": null,
+    "early_stop_success_patience": null,
+    "save_every_iters": null
+  },
+  "model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\dt_weights\\2026-05-31_19-18\\dt_model.pth"
+}

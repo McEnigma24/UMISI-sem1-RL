@@ -117,15 +117,23 @@ def allocate_dt_run_dir() -> Path:
     return run
 
 
-def sample_mean_episode_return(raw_ds: MinariDataset, *, max_episodes: int = 256) -> float:
-    """Średni zwrot z epizodów (suma nagród) — do heurystyki ``target_return`` dla online eval / DT."""
+def default_rtg_from_minari_episode_returns(raw_ds: MinariDataset, *, max_episodes: int = 512) -> float:
+    """
+    Heurystyka ``target_return`` / RTG dla online eval i DT rollouts.
+
+    Przy nagrodzie sparse średnia bywa silnie ujemna — ``max(średnia, 1)`` dawałoby absurdalne ``1.0``.
+    Używamy percentyla 90. (górny rejestr demonstracji), co lepiej odpowiada „optymistycznemu” RTG.
+    """
     n = min(max_episodes, len(raw_ds))
     if n <= 0:
-        return 1.0
-    s = 0.0
-    for i in range(n):
-        s += float(np.sum(np.asarray(raw_ds[i].rewards, dtype=np.float64)))
-    return max(s / float(n), 1.0)
+        return 50.0
+    rets = [float(np.sum(np.asarray(raw_ds[i].rewards, dtype=np.float64))) for i in range(n)]
+    p90 = float(np.percentile(rets, 90))
+    mx = float(np.max(rets))
+    # Sukces na Fetch sparse często daje zwrot 0 — „optymistyczny” RTG nie powinien być ujemny.
+    if mx <= 0.0:
+        return float(max(0.0, p90))
+    return float(max(p90, mx))
 
 
 def merge_extra_into_torch_checkpoint(path: Path, extras: dict[str, Any]) -> None:
@@ -316,7 +324,7 @@ def main() -> None:
         flat_keys = train_ds._keys
 
     env_id = args.env_id or raw_ds.env_spec.id
-    mean_ret = sample_mean_episode_return(raw_ds)
+    mean_ret = default_rtg_from_minari_episode_returns(raw_ds)
     online_target = (
         float(args.online_eval_target_return)
         if args.online_eval_target_return is not None
@@ -357,6 +365,14 @@ def main() -> None:
                 "online_mean_final_goal_dist": d["mean_final_goal_dist"],
             }
 
+    ckpt_extras_base = None
+    if args.save_every_iters:
+        ckpt_extras_base = {
+            "minari_dataset_id": args.dataset_id,
+            "flat_observation_keys": list(flat_keys) if flat_keys else None,
+            "env_id": env_id,
+        }
+
     hooks = L6TrainHooks(
         early_stop_patience=args.early_stop_patience,
         early_stop_loss_max=args.early_stop_loss_max,
@@ -372,6 +388,7 @@ def main() -> None:
         save_every_iters=args.save_every_iters,
         checkpoint_dir=run_dir if args.save_every_iters else None,
         checkpoint_agent=agent if args.save_every_iters else None,
+        checkpoint_extras_base=ckpt_extras_base,
     )
 
     set_pending_l6_train_hooks(hooks)
@@ -402,6 +419,7 @@ def main() -> None:
             "minari_dataset_id": args.dataset_id,
             "flat_observation_keys": list(flat_keys) if flat_keys else None,
             "env_id": env_id,
+            "early_stop_reason": early_info.get("stop_reason"),
             "early_stop": early_info,
         },
     )

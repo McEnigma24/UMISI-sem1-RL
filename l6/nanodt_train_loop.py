@@ -60,6 +60,8 @@ class L6TrainHooks:
     checkpoint_dir: Path | None = None
     # Required for checkpoints: same object as ``NanoDTAgent`` used in learn()
     checkpoint_agent: Any | None = None
+    # Merged into each mid-training ``.pth`` (e.g. Minari provenance); see ``train_dt_minari_fetch``.
+    checkpoint_extras_base: dict[str, Any] | None = None
 
 
 _PENDING_L6_TRAIN_HOOKS: L6TrainHooks | None = None
@@ -340,7 +342,10 @@ def decision_transformer_train_cyclic(self: DecisionTransformerTrainer) -> None:
             and iter_num % hooks.save_every_iters == 0
         ):
             ckpt = hooks.checkpoint_dir / f"ckpt_iter_{iter_num:08d}.pth"
-            _save_mid_checkpoint(self, hooks.checkpoint_agent, ckpt)
+            ck_extras: dict[str, Any] = dict(hooks.checkpoint_extras_base or {})
+            ck_extras["checkpoint_iter"] = int(iter_num)
+            ck_extras["checkpoint_kind"] = "mid_train"
+            _save_mid_checkpoint(self, hooks.checkpoint_agent, ckpt, extras=ck_extras)
 
         if iter_num > self.config.max_iters:
             LAST_TRAIN_REPORT["finished_iter"] = iter_num - 1

@@ -1,0 +1,22 @@
+{
+  "format_version": 1,
+  "env_id": "FetchReach-v4",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "n_episodes": 20,
+  "seed": 0,
+  "target_return": 0.0,
+  "dt": {
+    "mean_return": -49.6,
+    "mean_length": 50.0,
+    "success_rate_final": 0.0,
+    "success_rate_any": 0.05,
+    "mean_final_goal_dist": 0.12859642180489353
+  },
+  "baseline": null,
+  "baseline_algo": null,
+  "model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\dt_weights\\2026-05-31_19-18\\dt_model.pth"
+}
