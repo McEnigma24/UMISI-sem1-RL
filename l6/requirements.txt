@@ -20,7 +20,7 @@ tensorboard==2.19.0
 tqdm==4.67.1
 
 # --- demonstracje + Decision Transformer ---
-minari[hdf5]>=0.5.3,<0.6
+minari[hdf5,create]>=0.5.3,<0.6
 nanodt==0.1.0
 pillow>=11.2.1
 

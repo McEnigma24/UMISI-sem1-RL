@@ -1,0 +1,20 @@
+{
+  "format_version": 1,
+  "minari_datasets_root": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\minari_datasets",
+  "minari_dataset_id": "l6/fetchreach-v4/expert-sac-v0",
+  "minari_dataset_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\minari_datasets\\l6\\fetchreach-v4\\expert-sac-v0\\data",
+  "env_id": "FetchReach-v4",
+  "model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\weights\\2026-05-31_11-20_sac_her_fetch_suite\\FetchReach-v4\\sac_her_model.zip",
+  "sb3_algo": "SAC",
+  "n_episodes": 800,
+  "seed": 0,
+  "deterministic_rollout": true,
+  "record_infos": true,
+  "post_eval": {
+    "mean_return": -2.5,
+    "mean_length": 50.0,
+    "success_rate_final": 1.0,
+    "success_rate_any": 1.0,
+    "mean_final_goal_dist": 0.017186675296828966
+  }
+}
