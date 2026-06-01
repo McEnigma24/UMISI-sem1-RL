@@ -207,3 +207,13 @@ python plot_dt_vs_baseline.py --input dt_eval_runs\...\eval_metrics.json
 ```powershell
 tensorboard --logdir weights/besties
 ```
+
+
+
+
+
+
+
+python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip --env-id FetchReach-v4 --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip --env-id FetchSlide-v4 --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip --env-id FetchPush-v4 --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800; 
+
+python train_dt_minari_multi.py --dataset-ids l6/fetchreach-v4/expert-sac-v0 l6/fetchslide-v4/expert-sac-v0 l6/fetchpush-v4/expert-sac-v0 l6/fetchpickandplace-v4/expert-sac-v0 --skip-missing -- --max-iters 40000 --device cuda
