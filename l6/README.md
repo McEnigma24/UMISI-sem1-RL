@@ -135,16 +135,21 @@ Skrypt **[`record_expert_minari.py`](record_expert_minari.py)** ładuje checkpoi
 - Przy błędzie SB3 typu **`use_sde` / multiple values** przy `SAC.load`, skrypt próbuje **patch `SAC._setup_model`** (naprawa `policy_class` / `policy_kwargs`), a jeśli to nie pomoże — **tymczasowy zip** po poprawce pól w `data`.
 
 ```powershell
-python record_expert_minari.py --model weights\2026-05-31_11-20_sac_her_fetch_suite\FetchReach-v4\sac_her_model.zip --env-id FetchReach-v4 --n-episodes 800
-
-python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 1800;
-python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 1800;
-python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 1800;
-python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800;
-
-python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800;
-# --overwrite
+python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip --env-id FetchReach-v4 --overwrite --n-episodes 1800
+python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip --env-id FetchSlide-v4 --overwrite --n-episodes 1800
+python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip --env-id FetchPush-v4 --overwrite --n-episodes 1800
+python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800
 ```
+
+**Ile epizodów:** 1800 to sensowny kompromis (więcej danych offline niż 800, lepsze pokrycie zwłaszcza na Push/PickAndPlace); koszt to czas nagrania i rozmiar HDF5. Na szybki eksperyment wystarczy 800–1000.
+
+**Jedna linia — kolejno DT na cztery datasety SAC** (po nagraniu; `dataset_id` domyślny z nagrania: `l6/<env-slug>/expert-sac-v0`). Dostosuj `--max-iters` / `--device` pod GPU i budżet czasu (~3 h to orientacyjnie przy CPU i dużym `max_iters`):
+
+```powershell
+python train_dt_minari_multi.py --dataset-ids l6/fetchreach-v4/expert-sac-v0 l6/fetchslide-v4/expert-sac-v0 l6/fetchpush-v4/expert-sac-v0 l6/fetchpickandplace-v4/expert-sac-v0 --skip-missing -- --max-iters 40000 --device cuda
+```
+
+Alternatywa: `--all-local` zamiast listy ID (wszystkie datasety w `minari_datasets`, nie tylko Fetch).
 
 **Uwaga:** to jest **tylko rollout nagrany do Minari** — zatrzymanie po **`--n-episodes`** (brak early stopu „na metrykach treningowych”). Wczesny stop podczas **uczenia eksperta SAC** jest w [`train_expert_sac_her_fetch.py`](train_expert_sac_her_fetch.py) (sekcja wyżej). Przy **treningu DT** — flagi early stop / online eval w [`train_dt_minari_fetch.py`](train_dt_minari_fetch.py) i [`nanodt_train_loop.py`](nanodt_train_loop.py).
 
