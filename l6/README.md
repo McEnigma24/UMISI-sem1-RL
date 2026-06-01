@@ -137,13 +137,16 @@ Skrypt **[`record_expert_minari.py`](record_expert_minari.py)** ładuje checkpoi
 ```powershell
 python record_expert_minari.py --model weights\2026-05-31_11-20_sac_her_fetch_suite\FetchReach-v4\sac_her_model.zip --env-id FetchReach-v4 --n-episodes 800
 
-python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 800
-python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 800
-python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 800
-python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 800
+python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 1800;
+python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 1800;
+python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 1800;
+python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800;
 
+python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 1800; python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 1800;
 # --overwrite
 ```
+
+**Uwaga:** to jest **tylko rollout nagrany do Minari** — zatrzymanie po **`--n-episodes`** (brak early stopu „na metrykach treningowych”). Wczesny stop podczas **uczenia eksperta SAC** jest w [`train_expert_sac_her_fetch.py`](train_expert_sac_her_fetch.py) (sekcja wyżej). Przy **treningu DT** — flagi early stop / online eval w [`train_dt_minari_fetch.py`](train_dt_minari_fetch.py) i [`nanodt_train_loop.py`](nanodt_train_loop.py).
 
 ## Trening Decision Transformera (nanoDT)
 
