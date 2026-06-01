@@ -10,6 +10,12 @@ Przykład:
 
   python train_dt_minari_fetch.py --dataset-id l6/fetchreach-v4/expert-sac-v0 \\
       --max-iters 50000
+
+  # Lokalne datasety Minari (co można trenować):
+  python train_dt_minari_fetch.py --list-local-datasets
+
+  # Kolejno kilka zadań (tylko istniejące datasety):
+  python train_dt_minari_multi.py --all-local -- --max-iters 30000
 """
 from __future__ import annotations
 
@@ -273,6 +279,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Zapis pośredni co N iteracji do out-dir (None = tylko końcowy zapis)",
     )
+    p.add_argument(
+        "--list-local-datasets",
+        action="store_true",
+        help="Wypisz lokalne datasety Minari (MINARI_DATASETS_PATH) i zakończ bez treningu",
+    )
     return p
 
 
@@ -280,6 +291,29 @@ def main() -> None:
     args = build_parser().parse_args()
     if sys.platform == "win32":
         multiprocessing.freeze_support()
+
+    if args.list_local_datasets:
+        root = configure_minari_local_root(
+            args.minari_datasets_root.expanduser().resolve()
+            if args.minari_datasets_root is not None
+            else DEFAULT_MINARI_DATASETS_ROOT
+        )
+        print(f"MINARI_DATASETS_PATH={root}")
+        import minari
+
+        ids = minari.list_local_datasets()
+        if not ids:
+            print("(brak lokalnych datasetów)")
+            return
+        if isinstance(ids, dict):
+            for did in sorted(ids.keys()):
+                info = ids[did]
+                ne = info.get("total_episodes", "?")
+                print(f"  {did}  (episodes={ne})")
+        else:
+            for did in sorted(ids):
+                print(f"  {did}")
+        return
 
     if (args.early_stop_patience is not None) ^ (args.early_stop_loss_max is not None):
         raise SystemExit("Uzyj obu: --early-stop-patience i --early-stop-loss-max albo zadnego.")

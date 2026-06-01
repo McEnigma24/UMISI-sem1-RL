@@ -136,6 +136,12 @@ Skrypt **[`record_expert_minari.py`](record_expert_minari.py)** ładuje checkpoi
 
 ```powershell
 python record_expert_minari.py --model weights\2026-05-31_11-20_sac_her_fetch_suite\FetchReach-v4\sac_her_model.zip --env-id FetchReach-v4 --n-episodes 800
+
+python record_expert_minari.py --model weights\besties\FetchReach-v4\sac_her_model.zip        --env-id FetchReach-v4        --overwrite --n-episodes 800
+python record_expert_minari.py --model weights\besties\FetchSlide-v4\sac_her_model.zip        --env-id FetchSlide-v4        --overwrite --n-episodes 800
+python record_expert_minari.py --model weights\besties\FetchPush-v4\sac_her_model.zip         --env-id FetchPush-v4         --overwrite --n-episodes 800
+python record_expert_minari.py --model weights\besties\FetchPickAndPlace-v4\sac_her_model.zip --env-id FetchPickAndPlace-v4 --overwrite --n-episodes 800
+
 # --overwrite
 ```
 
@@ -149,6 +155,20 @@ Skrypt **[`train_dt_minari_fetch.py`](train_dt_minari_fetch.py)** ładuje lokaln
 ```powershell
 python train_dt_minari_fetch.py --dataset-id l6/fetchreach-v4/expert-sac-v0 --max-iters 50000
 python train_dt_minari_fetch.py --dataset-id l6/fetchreach-v4/expert-sac-v0 --max-iters 2000
+python train_dt_minari_fetch.py --list-local-datasets
+```
+
+### DT na innych Fetch (Push / Slide / PickAndPlace)
+
+1. **Dataset Minari** musi istnieć lokalnie — najpierw [`record_expert_minari.py`](record_expert_minari.py) z **`--env-id`** zgodnym z zip eksperta (np. `FetchPush-v4`) i spójnym **`--dataset-id`** (np. `l6/fetchpush-v4/expert-sac-v0`).
+2. **Trening:** `python train_dt_minari_fetch.py --dataset-id <ten_sam_id> --max-iters ...`
+   Ten sam pipeline co Reach: Dict obs → flatten, `env_id` z Minari w manifeście.
+3. **Wiele datasetów z rzędu:** [`train_dt_minari_multi.py`](train_dt_minari_multi.py) — `--all-local` (wszystkie lokalne) lub `--dataset-ids id1 id2 ...`; argumenty treningu po `--`, np. `-- --max-iters 40000 --device cuda`.
+
+```powershell
+python train_dt_minari_fetch.py --list-local-datasets
+python train_dt_minari_multi.py --dataset-ids l6/fetchreach-v4/expert-sac-v0 -- --max-iters 5000
+python train_dt_minari_multi.py --all-local --skip-missing -- --max-iters 30000
 ```
 
 ### Early stopping i metryki online (opcjonalnie)
