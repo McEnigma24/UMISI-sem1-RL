@@ -80,6 +80,9 @@ def run(cmd: list[str], *, title: str) -> None:
     env = dict(os.environ)
     env["PYTHONUTF8"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
+    # Bez tego stdout dziecka jest blokowo buforowany przy zapisie do pliku SLURM,
+    # więc logi treningu (step/iter) pojawiają się w wielkich porcjach (pozornie "wisi").
+    env["PYTHONUNBUFFERED"] = "1"
     res = subprocess.run(cmd, cwd=str(L6_ROOT), env=env)
     if res.returncode != 0:
         raise SystemExit(f"[{title}] zakończone błędem (exit {res.returncode}).")
