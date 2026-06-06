@@ -1,0 +1,27 @@
+ python/3.12.3-gcccore-13.3.0 unloaded.
+ python/3.12.3-gcccore-13.3.0 loaded.
+ cuda/12.9.1 loaded.
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Traceback (most recent call last):
+  File "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/train_dt_minari_fetch.py", line 515, in <module>
+    main()
+  File "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/train_dt_minari_fetch.py", line 437, in main
+    agent.learn(
+  File "/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/nanodt/agent.py", line 57, in learn
+    trainer.train()
+  File "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/nanodt_train_loop.py", line 310, in decision_transformer_train_cyclic
+    states, actions, rewards, rtgs, tsteps, mask = next(dataloader_iter)
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 718, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1501, in _next_data
+    idx, data = self._get_data()
+                ^^^^^^^^^^^^^^^^
+  File "/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1460, in _get_data
+    success, data = self._try_get_data()
+                    ^^^^^^^^^^^^^^^^^^^^
+  File "/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/torch/utils/data/dataloader.py", line 1322, in _try_get_data
+    raise RuntimeError(
+RuntimeError: Too many open files. Communication with the workers is no longer possible. Please increase the limit using `ulimit -n` in the shell or change the sharing strategy by calling `torch.multiprocessing.set_sharing_strategy('file_system')` at the beginning of your code
+[train] zakończone błędem (exit 1).
