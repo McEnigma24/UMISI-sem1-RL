@@ -9,6 +9,8 @@
 #
 # Uruchom z katalogu l6:  bash lsc_run_ckpt.sh
 
+rm -f GRID_log*
+
 set -e
 
 sbatch --parsable --job-name=DT_slide \

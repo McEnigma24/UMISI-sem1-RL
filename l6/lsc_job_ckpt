@@ -26,8 +26,10 @@ module load cuda
 
 pelna_sciezka=$(realpath .)
 output="${pelna_sciezka#/net/people/plgrid/plgwmackowiak/}"
+
 scratch_activation_path="$SCRATCH/$output/.venv/bin/activate"
 echo "SOURCING -> $scratch_activation_path"
+
 source $scratch_activation_path
 
 : "${CKPT_ENV:?Ustaw CKPT_ENV, np. --export=ALL,CKPT_ENV=FetchSlide-v4,CKPT_STEPS=800000}"

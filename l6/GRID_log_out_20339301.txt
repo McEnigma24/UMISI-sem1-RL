@@ -1,0 +1,84 @@
+total 280
+drwxr-xr-x 10 plgwmackowiak plgrid  4096 Jun  6 21:29 .
+drwxr-xr-x 10 plgwmackowiak plgrid  4096 May 31 12:38 ..
+drwxr-xr-x  7 plgwmackowiak plgrid  4096 Jun  6 20:57 dt_eval_runs
+drwxr-xr-x  7 plgwmackowiak plgrid  4096 Jun  6 20:57 dt_weights
+-rw-r--r--  1 plgwmackowiak plgrid 11808 Jun  6 20:57 eval_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid  3303 May 31 21:08 fetch_dt_rollout.py
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 Jun  6 20:57 figures
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  6 21:29 GRID_log_err_20339300.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  6 21:29 GRID_log_err_20339301.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  6 21:29 GRID_log_err_20339302.txt
+-rw-r--r--  1 plgwmackowiak plgrid  3019 Jun  6 21:29 GRID_log_out_20339300.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  6 21:29 GRID_log_out_20339301.txt
+-rw-r--r--  1 plgwmackowiak plgrid  3019 Jun  6 21:29 GRID_log_out_20339302.txt
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 21:29 latest_job_pnp
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 21:29 latest_job_push
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 21:29 latest_job_slide
+-rw-r--r--  1 plgwmackowiak plgrid     9 May 31 19:35 latest_job_started
+-rwxr-xr-x  1 plgwmackowiak plgrid    47 May 31 12:39 lsc_cancel.sh
+-rw-r--r--  1 plgwmackowiak plgrid   928 May 31 13:02 lsc_job
+-rw-r--r--  1 plgwmackowiak plgrid  1726 Jun  6 21:24 lsc_job_ckpt
+-rwxr-xr-x  1 plgwmackowiak plgrid  1013 Jun  6 21:07 lsc_run_ckpt.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid    98 May 31 12:39 lsc_run.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid    35 May 31 12:39 lsc_status.sh
+drwxr-xr-x  3 plgwmackowiak plgrid  4096 May 31 21:08 minari_datasets
+drwxr-xr-x  8 plgwmackowiak plgrid  4096 Jun  6 20:57 minari_recordings
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 Jun  6 20:57 _my_picks_
+-rw-r--r--  1 plgwmackowiak plgrid 13573 Jun  6 20:57 nanodt_train_loop.py
+-rw-r--r--  1 plgwmackowiak plgrid   990 May 31 12:45 .plgrid_commands
+-rw-r--r--  1 plgwmackowiak plgrid  5452 Jun  6 20:57 plot_dt_vs_baseline.py
+-rw-r--r--  1 plgwmackowiak plgrid  8588 Jun  6 20:57 plot_dt_vs_expert_suite.py
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 May 31 13:09 __pycache__
+-rw-r--r--  1 plgwmackowiak plgrid     5 May 31 12:38 .python-version
+-rw-r--r--  1 plgwmackowiak plgrid 16886 Jun  6 20:57 README.md
+-rw-r--r--  1 plgwmackowiak plgrid 17702 May 31 21:08 record_expert_minari.py
+-rw-r--r--  1 plgwmackowiak plgrid   879 May 31 21:08 requirements.txt
+-rw-r--r--  1 plgwmackowiak plgrid 10227 Jun  6 20:57 run_ckpt_pipeline.py
+-rw-r--r--  1 plgwmackowiak plgrid  2494 May 31 13:07 sb3_log_progress.py
+-rw-r--r--  1 plgwmackowiak plgrid 18848 Jun  6 20:57 train_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid  3827 Jun  6 20:57 train_dt_minari_multi.py
+-rw-r--r--  1 plgwmackowiak plgrid 13354 May 31 13:07 train_expert_ppo.py
+-rw-r--r--  1 plgwmackowiak plgrid 37365 May 31 19:35 train_expert_sac_her_fetch.py
+drwxr-xr-x  6 plgwmackowiak plgrid  4096 May 31 16:33 weights
+SOURCING -> /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/activate
+=== DT ckpt pipeline: FetchPush-v4 @ 300000 (ep=1800 iters=40000) ===
+Sat Jun  6 21:29:27 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.274.02             Driver Version: 535.274.02   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  Tesla V100-SXM2-32GB           On  | 00000000:5B:00.0 Off |                    0 |
+| N/A   42C    P0              42W / 300W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+cuda? True
+================================================================
+AKTYWNOŚĆ        : FetchPush-v4
+CHECKPOINT       : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPush-v4/checkpoints/sac_her_300000_steps.zip
+DATASET-ID       : l6/fetchpush-v4/ckpt300000-sac-v0
+MINARI ROOT      : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+DT OUT           : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPush-v4-ckpt300000
+EVAL OUT         : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpush-v4_300000
+ETAPY            : record, train, eval, plot
+================================================================
+
+========== [record] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python record_expert_minari.py --model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPush-v4/checkpoints/sac_her_300000_steps.zip --env-id FetchPush-v4 --algo sac --dataset-id l6/fetchpush-v4/ckpt300000-sac-v0 --minari-datasets-root /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets --n-episodes 1800 --seed 0
+Minari (MINARI_DATASETS_PATH): /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+Nagrywanie: env=FetchPush-v4 | model=sac_her_300000_steps.zip | algo=SAC | episodes=1800 | dataset_id=l6/fetchpush-v4/ckpt300000-sac-v0
+Ewaluacja po nagraniu (deterministyczna): success_final=0.967, success_any=1.000, mean_return=-11.57
+Koniec zadania (FetchPush-v4 @ 300000).
