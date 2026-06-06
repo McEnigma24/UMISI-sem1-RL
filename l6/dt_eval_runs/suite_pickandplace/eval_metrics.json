@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "env_id": "FetchPickAndPlace-v4",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "n_episodes": 50,
+  "seed": 0,
+  "target_return": 0.0,
+  "dt": {
+    "mean_return": -41.94,
+    "mean_length": 50.0,
+    "success_rate_final": 0.26,
+    "success_rate_any": 0.3,
+    "mean_final_goal_dist": 0.23279222079394438
+  },
+  "baseline": {
+    "mean_return": -41.02,
+    "mean_length": 50.0,
+    "success_rate_final": 0.22,
+    "success_rate_any": 0.3,
+    "mean_final_goal_dist": 0.22208128946554376
+  },
+  "baseline_algo": "SAC",
+  "baseline_model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\weights\\besties\\FetchPickAndPlace-v4\\sac_her_model.zip",
+  "baseline_resolution": "cli",
+  "model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\dt_weights\\2026-06-01_16-48\\dt_model.pth"
+}

@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "env_id": "FetchReach-v4",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "n_episodes": 50,
+  "seed": 0,
+  "target_return": 0.0,
+  "dt": {
+    "mean_return": -1.72,
+    "mean_length": 50.0,
+    "success_rate_final": 1.0,
+    "success_rate_any": 1.0,
+    "mean_final_goal_dist": 0.007623483329512051
+  },
+  "baseline": {
+    "mean_return": -1.62,
+    "mean_length": 50.0,
+    "success_rate_final": 1.0,
+    "success_rate_any": 1.0,
+    "mean_final_goal_dist": 0.007703120069854174
+  },
+  "baseline_algo": "SAC",
+  "baseline_model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\weights\\besties\\FetchReach-v4\\sac_her_model.zip",
+  "baseline_resolution": "cli",
+  "model_path": "C:\\Users\\womackow\\Zbiorczy\\_WIN_AI_AGH_\\WIN_sem_1\\UMISI-sem1-RL\\l6\\dt_weights\\2026-06-01_12-01\\dt_model.pth"
+}
