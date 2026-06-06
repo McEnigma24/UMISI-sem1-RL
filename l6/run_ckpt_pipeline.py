@@ -113,9 +113,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--eval-seed", type=int, default=0)
     # urządzenie
     p.add_argument("--device", default="auto", choices=("auto", "cpu", "cuda", "mps"))
-    # sterowanie etapami
+    # sterowanie etapami (domyślnie: WZNAWIALNE — każdy etap pomijany, gdy jego wynik już istnieje)
     p.add_argument("--stages", default="record,train,eval,plot", help="Lista etapów po przecinku")
+    p.add_argument("--force", action="store_true", help="Policz wszystkie etapy od nowa (ignoruj istniejące wyniki)")
     p.add_argument("--force-record", action="store_true", help="Nagraj ponownie nawet gdy dataset istnieje (--overwrite)")
+    p.add_argument("--force-train", action="store_true", help="Trenuj DT od nowa nawet gdy dt_model.pth istnieje")
+    p.add_argument("--force-eval", action="store_true", help="Ewaluuj od nowa nawet gdy eval_metrics.json istnieje")
+    p.add_argument("--force-plot", action="store_true", help="Rysuj od nowa nawet gdy wykres istnieje")
     # przekazanie surowych flag do treningu DT (np. early stopping)
     p.add_argument("--train-extra", default="", help="Dodatkowe flagi do train_dt_minari_fetch.py (w cudzysłowie)")
     return p
@@ -160,12 +164,16 @@ def main() -> None:
     print(f"ETAPY            : {', '.join(stages)}", flush=True)
     print("=" * 64, flush=True)
 
+    force_record = args.force or args.force_record
+    force_train = args.force or args.force_train
+    force_eval = args.force or args.force_eval
+    force_plot = args.force or args.force_plot
+
     # 1) RECORD
     if "record" in stages:
         ds_dir = minari_dataset_dir(minari_root, dataset_id)
-        exists = ds_dir.is_dir()
-        if exists and not args.force_record:
-            print(f"[record] Dataset już istnieje ({ds_dir}) — pomijam (użyj --force-record).", flush=True)
+        if ds_dir.is_dir() and not force_record:
+            print(f"[record] Dataset już istnieje ({ds_dir}) — pomijam (użyj --force-record/--force).", flush=True)
         else:
             cmd = [
                 PY, "record_expert_minari.py",
@@ -177,59 +185,69 @@ def main() -> None:
                 "--n-episodes", str(args.n_episodes),
                 "--seed", str(args.record_seed),
             ]
-            if args.force_record:
+            if force_record:
                 cmd.append("--overwrite")
             run(cmd, title="record")
 
-    # 2) TRAIN DT
-    if "train" in stages:
-        cmd = [
-            PY, "train_dt_minari_fetch.py",
-            "--dataset-id", dataset_id,
-            "--minari-datasets-root", str(minari_root),
-            "--env-id", args.env,
-            "--device", args.device,
-            "--max-iters", str(args.max_iters),
-            "--seed", str(args.train_seed),
-            "--out-dir", str(dt_out),
-        ]
-        if args.train_extra.strip():
-            cmd += args.train_extra.split()
-        run(cmd, title="train")
-
     dt_model = dt_out / "dt_model.pth"
     dt_manifest = dt_out / "manifest.json"
+    eval_json = eval_out / "eval_metrics.json"
+    plot_png = eval_out / "figures" / "dt_vs_baseline.png"
+
+    # 2) TRAIN DT
+    if "train" in stages:
+        if dt_model.is_file() and dt_manifest.is_file() and not force_train:
+            print(f"[train] DT już istnieje ({dt_model}) — pomijam (użyj --force-train/--force).", flush=True)
+        else:
+            cmd = [
+                PY, "train_dt_minari_fetch.py",
+                "--dataset-id", dataset_id,
+                "--minari-datasets-root", str(minari_root),
+                "--env-id", args.env,
+                "--device", args.device,
+                "--max-iters", str(args.max_iters),
+                "--seed", str(args.train_seed),
+                "--out-dir", str(dt_out),
+            ]
+            if args.train_extra.strip():
+                cmd += args.train_extra.split()
+            run(cmd, title="train")
 
     # 3) EVAL DT vs TEN checkpoint (te same seedy)
     if "eval" in stages:
-        if not dt_model.is_file():
-            raise SystemExit(f"[eval] Brak wytrenowanego DT: {dt_model} (uruchom etap train).")
-        cmd = [
-            PY, "eval_dt_minari_fetch.py",
-            "--model", str(dt_model),
-            "--manifest", str(dt_manifest),
-            "--baseline-model", str(ckpt),
-            "--baseline-algo", "sac",
-            "--env-id", args.env,
-            "--n-episodes", str(args.eval_episodes),
-            "--target-return", str(args.target_return),
-            "--seed", str(args.eval_seed),
-            "--device", resolve_eval_device(args.device),
-            "--out-dir", str(eval_out),
-        ]
-        run(cmd, title="eval")
+        if eval_json.is_file() and not force_eval:
+            print(f"[eval] Wynik już istnieje ({eval_json}) — pomijam (użyj --force-eval/--force).", flush=True)
+        else:
+            if not dt_model.is_file():
+                raise SystemExit(f"[eval] Brak wytrenowanego DT: {dt_model} (uruchom etap train).")
+            cmd = [
+                PY, "eval_dt_minari_fetch.py",
+                "--model", str(dt_model),
+                "--manifest", str(dt_manifest),
+                "--baseline-model", str(ckpt),
+                "--baseline-algo", "sac",
+                "--env-id", args.env,
+                "--n-episodes", str(args.eval_episodes),
+                "--target-return", str(args.target_return),
+                "--seed", str(args.eval_seed),
+                "--device", resolve_eval_device(args.device),
+                "--out-dir", str(eval_out),
+            ]
+            run(cmd, title="eval")
 
     # 4) PLOT per aktywność (DT vs checkpoint)
     if "plot" in stages:
-        eval_json = eval_out / "eval_metrics.json"
-        if not eval_json.is_file():
-            raise SystemExit(f"[plot] Brak {eval_json} (uruchom etap eval).")
-        cmd = [
-            PY, "plot_dt_vs_baseline.py",
-            "--input", str(eval_json),
-            "--title", f"DT (z checkpointu {steps}) vs checkpoint — {args.env}",
-        ]
-        run(cmd, title="plot")
+        if plot_png.is_file() and not force_plot:
+            print(f"[plot] Wykres już istnieje ({plot_png}) — pomijam (użyj --force-plot/--force).", flush=True)
+        else:
+            if not eval_json.is_file():
+                raise SystemExit(f"[plot] Brak {eval_json} (uruchom etap eval).")
+            cmd = [
+                PY, "plot_dt_vs_baseline.py",
+                "--input", str(eval_json),
+                "--title", f"DT (z checkpointu {steps}) vs checkpoint — {args.env}",
+            ]
+            run(cmd, title="plot")
 
     print("\n========== GOTOWE ==========", flush=True)
     print(f"Eval JSON : {eval_out / 'eval_metrics.json'}", flush=True)

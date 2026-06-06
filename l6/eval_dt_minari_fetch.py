@@ -38,10 +38,16 @@ EVAL_ROOT = L6_ROOT / "dt_eval_runs"
 
 def allocate_eval_run_dir() -> Path:
     EVAL_ROOT.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
-    run = EVAL_ROOT / stamp
-    run.mkdir(parents=True, exist_ok=False)
-    return run
+    base = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
+    run = EVAL_ROOT / base
+    i = 1
+    while True:
+        try:
+            run.mkdir(parents=True, exist_ok=False)
+            return run
+        except FileExistsError:
+            run = EVAL_ROOT / f"{base}_{i}"
+            i += 1
 
 
 def load_manifest(path: Path | None) -> dict[str, Any]:

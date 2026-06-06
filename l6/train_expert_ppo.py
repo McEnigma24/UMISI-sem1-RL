@@ -120,10 +120,20 @@ def make_training_vec_env(env_id: str, n_envs: int) -> DummyVecEnv:
 
 
 def allocate_run_dir(root: Path) -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
-    run = root / stamp
-    run.mkdir(parents=True, exist_ok=False)
-    return run
+    """Katalog runu ze znacznikiem czasu. Odporny na kolizje: gdy kilka jobów
+    (np. 3 równoległe na Slurm) trafi w tę samą minutę, dokłada sufiks _1, _2, …
+    zamiast rzucać FileExistsError."""
+    root.mkdir(parents=True, exist_ok=True)
+    base = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
+    run = root / base
+    i = 1
+    while True:
+        try:
+            run.mkdir(parents=True, exist_ok=False)
+            return run
+        except FileExistsError:
+            run = root / f"{base}_{i}"
+            i += 1
 
 
 @dataclass

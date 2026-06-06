@@ -117,10 +117,17 @@ def default_flat_key_order(obs_space: gym.Space) -> tuple[str, ...]:
 
 
 def allocate_dt_run_dir() -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
-    run = DT_WEIGHTS_ROOT / stamp
-    run.mkdir(parents=True, exist_ok=False)
-    return run
+    DT_WEIGHTS_ROOT.mkdir(parents=True, exist_ok=True)
+    base = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
+    run = DT_WEIGHTS_ROOT / base
+    i = 1
+    while True:
+        try:
+            run.mkdir(parents=True, exist_ok=False)
+            return run
+        except FileExistsError:
+            run = DT_WEIGHTS_ROOT / f"{base}_{i}"
+            i += 1
 
 
 def default_rtg_from_minari_episode_returns(raw_ds: MinariDataset, *, max_episodes: int = 512) -> float:
