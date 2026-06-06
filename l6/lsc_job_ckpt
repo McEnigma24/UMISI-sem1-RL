@@ -5,7 +5,7 @@
 #SBATCH --time=03:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=16G
+#SBATCH --mem=24G
 #SBATCH --gres=gpu:1
 #SBATCH --output=GRID_log_out_%j.txt
 #SBATCH --error=GRID_log_err_%j.txt

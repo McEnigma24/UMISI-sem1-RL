@@ -17,6 +17,7 @@ Source reference: https://github.com/lubiluk/nanoDT
 from __future__ import annotations
 
 import itertools
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -177,12 +178,15 @@ def decision_transformer_train_cyclic(self: DecisionTransformerTrainer) -> None:
         num_samples=n_samples,
         replacement=True,
     )
-    num_workers = 0 if sys.platform == "win32" else 2
-    # Workery DataLoadera dzielą tensory przez deskryptory plików; przy czytaniu
-    # z HDF5 Minari wyczerpuje to ``ulimit -n`` ("RuntimeError: Too many open files",
-    # crash ~iter 5000 na Slurm). Strategia 'file_system' używa plików w /dev/shm
-    # zamiast fd i jest stabilna przy długich runach z wieloma workerami.
+    # Domyślnie 0 workerów. Multiprocessing DataLoadera na Slurm wycieka zasoby na
+    # współdzielonych tensorach: strategia 'file_descriptor' -> "Too many open files"
+    # (~iter 5000), a 'file_system' -> "Cannot allocate memory" przy mmap z /dev/shm.
+    # 0 workerów = brak współdzielenia między procesami => stabilnie (DT jest mały,
+    # dane są w pamięci, narzut nieistotny). Nadpisanie: L6_DT_NUM_WORKERS.
+    _default_workers = 0
+    num_workers = int(os.environ.get("L6_DT_NUM_WORKERS", _default_workers))
     if num_workers > 0:
+        # Przy wymuszonych workerach 'file_system' jest mniej wrażliwe na ulimit -n.
         try:
             torch.multiprocessing.set_sharing_strategy("file_system")
         except (RuntimeError, AttributeError):
