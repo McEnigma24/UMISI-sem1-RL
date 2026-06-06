@@ -105,6 +105,8 @@ def build_parser() -> argparse.ArgumentParser:
     # rozmiary etapów
     p.add_argument("--n-episodes", type=int, default=1800, help="Epizody do nagrania (ostatnio: 1800)")
     p.add_argument("--max-iters", type=int, default=40000, help="Iteracje treningu DT (jak modele eksperckie)")
+    p.add_argument("--save-every-iters", type=int, default=5000, help="Checkpointy DT co N iter (0 = wyłącz) — umożliwia wznowienie po crashu/wywłaszczeniu")
+    p.add_argument("--no-resume", action="store_true", help="Nie wznawiaj DT z ostatniego ckpt_iter_*.pth (domyślnie wznawia, jeśli istnieje)")
     p.add_argument("--eval-episodes", type=int, default=50, help="Epizody ewaluacji DT vs checkpoint")
     p.add_argument("--target-return", type=float, default=0.0, help="RTG dla DT (Fetch sparse: 0.0 = maks.)")
     # seedy (spójnie z dotychczasowym pipeline)
@@ -209,6 +211,10 @@ def main() -> None:
                 "--seed", str(args.train_seed),
                 "--out-dir", str(dt_out),
             ]
+            if int(args.save_every_iters) > 0:
+                cmd += ["--save-every-iters", str(args.save_every_iters)]
+                if not args.no_resume:
+                    cmd += ["--resume"]
             if args.train_extra.strip():
                 cmd += args.train_extra.split()
             run(cmd, title="train")

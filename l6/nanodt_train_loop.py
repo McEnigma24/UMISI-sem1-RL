@@ -63,6 +63,11 @@ class L6TrainHooks:
     # Merged into each mid-training ``.pth`` (e.g. Minari provenance); see ``train_dt_minari_fetch``.
     checkpoint_extras_base: dict[str, Any] | None = None
 
+    # Wznawianie treningu od checkpointu: wczytaj te wagi do modelu i zacznij od tej iteracji.
+    # ``agent.learn`` tworzy świeży model w środku, więc wagi muszą trafić tu (pętla ma self.model).
+    resume_from_iter: int = 0
+    resume_state_dict: Any | None = None
+
 
 _PENDING_L6_TRAIN_HOOKS: L6TrainHooks | None = None
 
@@ -173,6 +178,15 @@ def decision_transformer_train_cyclic(self: DecisionTransformerTrainer) -> None:
         replacement=True,
     )
     num_workers = 0 if sys.platform == "win32" else 2
+    # Workery DataLoadera dzielą tensory przez deskryptory plików; przy czytaniu
+    # z HDF5 Minari wyczerpuje to ``ulimit -n`` ("RuntimeError: Too many open files",
+    # crash ~iter 5000 na Slurm). Strategia 'file_system' używa plików w /dev/shm
+    # zamiast fd i jest stabilna przy długich runach z wieloma workerami.
+    if num_workers > 0:
+        try:
+            torch.multiprocessing.set_sharing_strategy("file_system")
+        except (RuntimeError, AttributeError):
+            pass
     dataloader = DataLoader(
         self.dataset,
         batch_size=self.config.batch_size,
@@ -184,6 +198,15 @@ def decision_transformer_train_cyclic(self: DecisionTransformerTrainer) -> None:
 
     iter_num = 0
     self.model.to(self.config.device)
+
+    # Wznawianie: wczytaj wagi z checkpointu i zacznij od zapisanej iteracji.
+    # Optimizer startuje od zera (momenty Adama nie są w checkpointcie) — przy
+    # krótkim runie DT to drobna perturbacja, model nie traci nauczonych wag.
+    if hooks.resume_state_dict is not None:
+        self.model.load_state_dict(hooks.resume_state_dict)
+        self.model.to(self.config.device)
+        iter_num = int(hooks.resume_from_iter)
+        print(f"Wznawiam trening DT od iteracji {iter_num}", flush=True)
 
     states, actions, rewards, rtgs, tsteps, mask = next(dataloader_iter)
     t0 = time.time()

@@ -23,6 +23,7 @@ import argparse
 import importlib.metadata
 import json
 import multiprocessing
+import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -114,6 +115,24 @@ def default_flat_key_order(obs_space: gym.Space) -> tuple[str, ...]:
     if isinstance(obs_space, gym.spaces.Dict):
         return tuple(sorted(obs_space.spaces.keys()))
     raise TypeError(f"Oczekiwano Dict obs, jest {type(obs_space)}")
+
+
+_CKPT_ITER_RE = re.compile(r"ckpt_iter_(\d+)\.pth$")
+
+
+def find_latest_dt_checkpoint(run_dir: Path) -> tuple[Path, int] | None:
+    """Najnowszy ``ckpt_iter_########.pth`` w katalogu (po numerze iteracji)."""
+    if not run_dir.is_dir():
+        return None
+    best: tuple[Path, int] | None = None
+    for p in run_dir.glob("ckpt_iter_*.pth"):
+        m = _CKPT_ITER_RE.search(p.name)
+        if not m:
+            continue
+        it = int(m.group(1))
+        if best is None or it > best[1]:
+            best = (p, it)
+    return best
 
 
 def allocate_dt_run_dir() -> Path:
@@ -287,6 +306,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Zapis pośredni co N iteracji do out-dir (None = tylko końcowy zapis)",
     )
     p.add_argument(
+        "--resume",
+        action="store_true",
+        help="Wznów z najnowszego ckpt_iter_*.pth w --out-dir (po crashu/wywłaszczeniu). "
+        "Wymaga, by wcześniej zapisano checkpointy (--save-every-iters).",
+    )
+    p.add_argument(
         "--list-local-datasets",
         action="store_true",
         help="Wypisz lokalne datasety Minari (MINARI_DATASETS_PATH) i zakończ bez treningu",
@@ -414,6 +439,27 @@ def main() -> None:
             "env_id": env_id,
         }
 
+    resume_from_iter = 0
+    resume_state_dict = None
+    if args.resume:
+        latest = find_latest_dt_checkpoint(run_dir)
+        if latest is None:
+            print("[resume] Brak ckpt_iter_*.pth w out-dir — start od zera.", file=sys.stderr)
+        elif latest[1] >= int(args.max_iters):
+            print(
+                f"[resume] Ostatni checkpoint iter={latest[1]} >= max_iters={args.max_iters} "
+                "— nic do dotrenowania, start od zera nie nastąpi.",
+                file=sys.stderr,
+            )
+        else:
+            blob = torch.load(str(latest[0]), map_location="cpu", weights_only=False)
+            resume_state_dict = blob["model_state_dict"]
+            resume_from_iter = int(latest[1])
+            print(
+                f"[resume] Wznawiam z {latest[0].name} (iter {resume_from_iter}/{args.max_iters}).",
+                file=sys.stderr,
+            )
+
     hooks = L6TrainHooks(
         early_stop_patience=args.early_stop_patience,
         early_stop_loss_max=args.early_stop_loss_max,
@@ -430,6 +476,8 @@ def main() -> None:
         checkpoint_dir=run_dir if args.save_every_iters else None,
         checkpoint_agent=agent if args.save_every_iters else None,
         checkpoint_extras_base=ckpt_extras_base,
+        resume_from_iter=resume_from_iter,
+        resume_state_dict=resume_state_dict,
     )
 
     set_pending_l6_train_hooks(hooks)
