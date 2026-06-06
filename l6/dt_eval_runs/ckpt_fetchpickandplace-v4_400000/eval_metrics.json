@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "env_id": "FetchPickAndPlace-v4",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "n_episodes": 50,
+  "seed": 0,
+  "target_return": 0.0,
+  "dt": {
+    "mean_return": -47.7,
+    "mean_length": 50.0,
+    "success_rate_final": 0.08,
+    "success_rate_any": 0.12,
+    "mean_final_goal_dist": 0.2439154122196868
+  },
+  "baseline": {
+    "mean_return": -47.66,
+    "mean_length": 50.0,
+    "success_rate_final": 0.08,
+    "success_rate_any": 0.08,
+    "mean_final_goal_dist": 0.2618485836902449
+  },
+  "baseline_algo": "SAC",
+  "baseline_model_path": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/checkpoints/sac_her_400000_steps.zip",
+  "baseline_resolution": "cli",
+  "model_path": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt400000/dt_model.pth"
+}

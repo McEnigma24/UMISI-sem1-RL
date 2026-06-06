@@ -1,0 +1,30 @@
+{
+  "format_version": 1,
+  "env_id": "FetchPush-v4",
+  "flat_observation_keys": [
+    "achieved_goal",
+    "desired_goal",
+    "observation"
+  ],
+  "n_episodes": 50,
+  "seed": 0,
+  "target_return": 0.0,
+  "dt": {
+    "mean_return": -17.56,
+    "mean_length": 50.0,
+    "success_rate_final": 0.86,
+    "success_rate_any": 0.9,
+    "mean_final_goal_dist": 0.038466470141722324
+  },
+  "baseline": {
+    "mean_return": -17.38,
+    "mean_length": 50.0,
+    "success_rate_final": 0.84,
+    "success_rate_any": 0.9,
+    "mean_final_goal_dist": 0.0524822681057872
+  },
+  "baseline_algo": "SAC",
+  "baseline_model_path": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPush-v4/checkpoints/sac_her_300000_steps.zip",
+  "baseline_resolution": "cli",
+  "model_path": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPush-v4-ckpt300000/dt_model.pth"
+}
