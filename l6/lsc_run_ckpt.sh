@@ -31,6 +31,12 @@ submit() {
     echo "POMIJAM ${env} @ ${steps}: brak pliku ${ckpt}"
     return 0
   fi
+  # W trybie tylko-eval zglaszaj wylacznie configi z gotowym modelem DT
+  # (pozwala podac pelna liste krokow i przeliczyc tylko realnie wytrenowane).
+  if [ "${EVAL_ONLY:-0}" = "1" ] && [ ! -f "dt_weights_ckpt/${env}-ckpt${steps}/dt_model.pth" ]; then
+    echo "POMIJAM ${env} @ ${steps}: brak wytrenowanego dt_model.pth (tryb EVAL_ONLY)"
+    return 0
+  fi
   local jid
   jid=$(sbatch --parsable --job-name="DT_${env}_${steps}" \
         --export=ALL,CKPT_ENV="${env}",CKPT_STEPS="${steps}" \

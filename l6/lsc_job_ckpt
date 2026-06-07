@@ -43,8 +43,23 @@ source $scratch_activation_path
 N_EPISODES="${N_EPISODES:-1800}"
 MAX_ITERS="${MAX_ITERS:-40000}"
 EVAL_EP="${EVAL_EP:-50}"
+# EVAL_ONLY=1  -> tylko ponowna ewaluacja (record/train pomijane); przydatne
+#                do zwiekszenia liczby epizodow bez retreningu.
+# FORCE_EVAL=1 -> przelicz eval nawet gdy eval_metrics.json juz istnieje (nadpisze).
+EVAL_ONLY="${EVAL_ONLY:-0}"
+FORCE_EVAL="${FORCE_EVAL:-0}"
 
-echo "=== DT ckpt pipeline: $CKPT_ENV @ $CKPT_STEPS (ep=$N_EPISODES iters=$MAX_ITERS) ==="
+STAGES="record,train,eval,plot"
+if [ "$EVAL_ONLY" = "1" ]; then
+  STAGES="eval,plot"
+fi
+
+EXTRA_FLAGS=()
+if [ "$FORCE_EVAL" = "1" ]; then
+  EXTRA_FLAGS+=(--force-eval --force-plot)
+fi
+
+echo "=== DT ckpt pipeline: $CKPT_ENV @ $CKPT_STEPS (ep=$N_EPISODES iters=$MAX_ITERS eval_ep=$EVAL_EP stages=$STAGES) ==="
 nvidia-smi || true
 python -c "import torch; print('cuda?', torch.cuda.is_available())"
 
@@ -54,6 +69,8 @@ python run_ckpt_pipeline.py \
   --device cuda \
   --n-episodes "$N_EPISODES" \
   --max-iters "$MAX_ITERS" \
-  --eval-episodes "$EVAL_EP"
+  --eval-episodes "$EVAL_EP" \
+  --stages "$STAGES" \
+  "${EXTRA_FLAGS[@]}"
 
 echo "Koniec zadania ($CKPT_ENV @ $CKPT_STEPS)."
