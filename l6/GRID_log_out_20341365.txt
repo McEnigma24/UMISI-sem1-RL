@@ -1,0 +1,380 @@
+total 460
+drwxr-xr-x 11 plgwmackowiak plgrid  4096 Jun  7 01:02 .
+drwxr-xr-x 10 plgwmackowiak plgrid  4096 May 31 12:38 ..
+drwxr-xr-x 10 plgwmackowiak plgrid  4096 Jun  7 00:07 dt_eval_runs
+drwxr-xr-x  7 plgwmackowiak plgrid  4096 Jun  6 20:57 dt_weights
+drwxr-xr-x  5 plgwmackowiak plgrid  4096 Jun  6 21:54 dt_weights_ckpt
+-rw-r--r--  1 plgwmackowiak plgrid 11956 Jun  6 21:54 eval_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid  3303 May 31 21:08 fetch_dt_rollout.py
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 Jun  6 20:57 figures
+-rw-r--r--  1 plgwmackowiak plgrid  1019 Jun  7 00:04 GRID_log_err_20340881.txt
+-rw-r--r--  1 plgwmackowiak plgrid  1018 Jun  7 00:03 GRID_log_err_20340882.txt
+-rw-r--r--  1 plgwmackowiak plgrid  1026 Jun  7 00:07 GRID_log_err_20340883.txt
+-rw-r--r--  1 plgwmackowiak plgrid    99 Jun  7 01:02 GRID_log_err_20341358.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341359.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341360.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341361.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341362.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341363.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341364.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_err_20341365.txt
+-rw-r--r--  1 plgwmackowiak plgrid 17830 Jun  7 00:04 GRID_log_out_20340881.txt
+-rw-r--r--  1 plgwmackowiak plgrid 17806 Jun  7 00:03 GRID_log_out_20340882.txt
+-rw-r--r--  1 plgwmackowiak plgrid 17677 Jun  7 00:07 GRID_log_out_20340883.txt
+-rw-r--r--  1 plgwmackowiak plgrid  5949 Jun  7 01:02 GRID_log_out_20341358.txt
+-rw-r--r--  1 plgwmackowiak plgrid  4524 Jun  7 01:02 GRID_log_out_20341359.txt
+-rw-r--r--  1 plgwmackowiak plgrid  5164 Jun  7 01:02 GRID_log_out_20341360.txt
+-rw-r--r--  1 plgwmackowiak plgrid  4524 Jun  7 01:02 GRID_log_out_20341361.txt
+-rw-r--r--  1 plgwmackowiak plgrid  5164 Jun  7 01:02 GRID_log_out_20341362.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_out_20341363.txt
+-rw-r--r--  1 plgwmackowiak plgrid  4524 Jun  7 01:02 GRID_log_out_20341364.txt
+-rw-r--r--  1 plgwmackowiak plgrid     0 Jun  7 01:02 GRID_log_out_20341365.txt
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchPickAndPlace-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchPickAndPlace-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchPickAndPlace-v4_600000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchPush-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchPush-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchSlide-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchSlide-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  7 01:02 latest_job_FetchSlide-v4_600000
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 22:47 latest_job_pnp
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 22:47 latest_job_push
+-rw-r--r--  1 plgwmackowiak plgrid     9 Jun  6 22:47 latest_job_slide
+-rw-r--r--  1 plgwmackowiak plgrid     9 May 31 19:35 latest_job_started
+-rwxr-xr-x  1 plgwmackowiak plgrid    47 May 31 12:39 lsc_cancel.sh
+-rw-r--r--  1 plgwmackowiak plgrid   928 May 31 13:02 lsc_job
+-rw-r--r--  1 plgwmackowiak plgrid  2050 Jun  6 22:47 lsc_job_ckpt
+-rwxr-xr-x  1 plgwmackowiak plgrid  1832 Jun  7 01:02 lsc_run_ckpt.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid    98 May 31 12:39 lsc_run.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid    35 May 31 12:39 lsc_status.sh
+drwxr-xr-x  3 plgwmackowiak plgrid  4096 Jun  6 21:34 minari_datasets
+drwxr-xr-x  9 plgwmackowiak plgrid  4096 Jun  6 21:34 minari_recordings
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 Jun  6 20:57 _my_picks_
+-rw-r--r--  1 plgwmackowiak plgrid 15095 Jun  6 22:47 nanodt_train_loop.py
+-rw-r--r--  1 plgwmackowiak plgrid   990 May 31 12:45 .plgrid_commands
+-rw-r--r--  1 plgwmackowiak plgrid  5452 Jun  6 20:57 plot_dt_vs_baseline.py
+-rw-r--r--  1 plgwmackowiak plgrid  8588 Jun  6 20:57 plot_dt_vs_expert_suite.py
+drwxr-xr-x  2 plgwmackowiak plgrid  4096 Jun  6 22:47 __pycache__
+-rw-r--r--  1 plgwmackowiak plgrid     5 May 31 12:38 .python-version
+-rw-r--r--  1 plgwmackowiak plgrid 16886 Jun  6 20:57 README.md
+-rw-r--r--  1 plgwmackowiak plgrid 17702 May 31 21:08 record_expert_minari.py
+-rw-r--r--  1 plgwmackowiak plgrid   879 May 31 21:08 requirements.txt
+-rw-r--r--  1 plgwmackowiak plgrid 12423 Jun  7 00:17 run_ckpt_pipeline.py
+-rw-r--r--  1 plgwmackowiak plgrid  2494 May 31 13:07 sb3_log_progress.py
+-rw-r--r--  1 plgwmackowiak plgrid 10730 Jun  7 00:17 SPRAWOZDANIE.md
+-rw-r--r--  1 plgwmackowiak plgrid 20840 Jun  6 22:15 train_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid  3827 Jun  6 20:57 train_dt_minari_multi.py
+-rw-r--r--  1 plgwmackowiak plgrid 13749 Jun  6 21:54 train_expert_ppo.py
+-rw-r--r--  1 plgwmackowiak plgrid 37365 May 31 19:35 train_expert_sac_her_fetch.py
+drwxr-xr-x  6 plgwmackowiak plgrid  4096 May 31 16:33 weights
+ulimit -n = 16384
+SOURCING -> /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/activate
+=== DT ckpt pipeline: FetchPickAndPlace-v4 @ 600000 (ep=1800 iters=40000) ===
+Sun Jun  7 01:02:49 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.274.02             Driver Version: 535.274.02   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  Tesla V100-SXM2-32GB           On  | 00000000:E7:00.0 Off |                    0 |
+| N/A   39C    P0              41W / 300W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+cuda? True
+================================================================
+AKTYWNOŚĆ        : FetchPickAndPlace-v4
+CHECKPOINT       : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/checkpoints/sac_her_600000_steps.zip
+DATASET-ID       : l6/fetchpickandplace-v4/ckpt600000-sac-v0
+MINARI ROOT      : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+DT OUT           : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000
+EVAL OUT         : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000
+ETAPY            : record, train, eval, plot
+================================================================
+
+========== [record] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python record_expert_minari.py --model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/checkpoints/sac_her_600000_steps.zip --env-id FetchPickAndPlace-v4 --algo sac --dataset-id l6/fetchpickandplace-v4/ckpt600000-sac-v0 --minari-datasets-root /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets --n-episodes 1800 --seed 0
+Minari (MINARI_DATASETS_PATH): /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+Nagrywanie: env=FetchPickAndPlace-v4 | model=sac_her_600000_steps.zip | algo=SAC | episodes=1800 | dataset_id=l6/fetchpickandplace-v4/ckpt600000-sac-v0
+Ewaluacja po nagraniu (deterministyczna): success_final=0.400, success_any=0.433, mean_return=-36.13
+Minari: dataset_id=l6/fetchpickandplace-v4/ckpt600000-sac-v0
+Manifest run: /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_recordings/2026-06-06_23-08_1/manifest.json
+Podgląd lokalnych datasetów:  python -m minari list local
+
+========== [train] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python train_dt_minari_fetch.py --dataset-id l6/fetchpickandplace-v4/ckpt600000-sac-v0 --minari-datasets-root /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets --env-id FetchPickAndPlace-v4 --device cuda --max-iters 40000 --seed 42 --out-dir /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000 --save-every-iters 5000 --resume
+MINARI_DATASETS_PATH=/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+Device: cuda
+Config: DecisionTransformerConfig(n_layer=3, n_head=1, n_embd=128, dropout=0.1, bias=False, K=20, max_ep_len=128, state_dim=31, act_dim=4, act_discrete=False, act_vocab_size=1, act_tanh=False, tanh_embeddings=False)
+number of parameters: 0.59M
+num decayed parameter tensors: 17, with 611,328 parameters
+num non-decayed parameter tensors: 12, with 1,412 parameters
+using fused AdamW: True
+step 0: train loss 0.3140, val loss 0.3194
+iter 0: loss 0.3132, time 14745.24ms, mfu -100.00%
+iter 200: loss 0.1141, time 143.95ms, mfu 0.08%
+iter 400: loss 0.0990, time 144.13ms, mfu 0.08%
+iter 600: loss 0.0926, time 144.97ms, mfu 0.08%
+iter 800: loss 0.0882, time 145.96ms, mfu 0.08%
+iter 1000: loss 0.0633, time 145.62ms, mfu 0.08%
+iter 1200: loss 0.0566, time 145.07ms, mfu 0.08%
+iter 1400: loss 0.0732, time 143.74ms, mfu 0.08%
+iter 1600: loss 0.0562, time 145.40ms, mfu 0.08%
+iter 1800: loss 0.0529, time 145.97ms, mfu 0.08%
+step 2000: train loss 0.0491, val loss 0.0531
+iter 2000: loss 0.0641, time 14296.86ms, mfu 0.07%
+iter 2200: loss 0.0441, time 144.72ms, mfu 0.07%
+iter 2400: loss 0.0474, time 146.38ms, mfu 0.07%
+iter 2600: loss 0.0430, time 145.91ms, mfu 0.07%
+iter 2800: loss 0.0366, time 149.63ms, mfu 0.07%
+iter 3000: loss 0.0320, time 147.91ms, mfu 0.07%
+iter 3200: loss 0.0483, time 146.80ms, mfu 0.07%
+iter 3400: loss 0.0428, time 145.17ms, mfu 0.07%
+iter 3600: loss 0.0373, time 146.37ms, mfu 0.07%
+iter 3800: loss 0.0403, time 146.70ms, mfu 0.07%
+step 4000: train loss 0.0316, val loss 0.0310
+iter 4000: loss 0.0454, time 14426.11ms, mfu 0.06%
+iter 4200: loss 0.0422, time 145.99ms, mfu 0.07%
+iter 4400: loss 0.0249, time 145.78ms, mfu 0.07%
+iter 4600: loss 0.0362, time 148.01ms, mfu 0.07%
+iter 4800: loss 0.0341, time 145.87ms, mfu 0.07%
+iter 5000: loss 0.0299, time 174.30ms, mfu 0.07%
+iter 5200: loss 0.0370, time 146.46ms, mfu 0.07%
+iter 5400: loss 0.0317, time 147.01ms, mfu 0.07%
+iter 5600: loss 0.0310, time 146.23ms, mfu 0.07%
+iter 5800: loss 0.0326, time 146.26ms, mfu 0.07%
+step 6000: train loss 0.0247, val loss 0.0241
+iter 6000: loss 0.0372, time 14301.53ms, mfu 0.06%
+iter 6200: loss 0.0277, time 145.37ms, mfu 0.06%
+iter 6400: loss 0.0301, time 146.65ms, mfu 0.07%
+iter 6600: loss 0.0316, time 146.79ms, mfu 0.07%
+iter 6800: loss 0.0336, time 145.36ms, mfu 0.07%
+iter 7000: loss 0.0330, time 146.54ms, mfu 0.07%
+iter 7200: loss 0.0284, time 146.54ms, mfu 0.07%
+iter 7400: loss 0.0177, time 147.71ms, mfu 0.07%
+iter 7600: loss 0.0301, time 146.24ms, mfu 0.07%
+iter 7800: loss 0.0226, time 145.75ms, mfu 0.07%
+step 8000: train loss 0.0207, val loss 0.0215
+iter 8000: loss 0.0339, time 14413.78ms, mfu 0.06%
+iter 8200: loss 0.0228, time 144.57ms, mfu 0.06%
+iter 8400: loss 0.0317, time 146.14ms, mfu 0.07%
+iter 8600: loss 0.0301, time 146.03ms, mfu 0.07%
+iter 8800: loss 0.0244, time 146.86ms, mfu 0.07%
+iter 9000: loss 0.0230, time 146.53ms, mfu 0.07%
+iter 9200: loss 0.0250, time 146.82ms, mfu 0.07%
+iter 9400: loss 0.0268, time 147.12ms, mfu 0.07%
+iter 9600: loss 0.0247, time 146.30ms, mfu 0.07%
+iter 9800: loss 0.0181, time 147.22ms, mfu 0.07%
+step 10000: train loss 0.0185, val loss 0.0170
+iter 10000: loss 0.0272, time 14337.45ms, mfu 0.06%
+iter 10200: loss 0.0230, time 147.74ms, mfu 0.06%
+iter 10400: loss 0.0218, time 149.18ms, mfu 0.06%
+iter 10600: loss 0.0190, time 147.69ms, mfu 0.07%
+iter 10800: loss 0.0212, time 147.92ms, mfu 0.07%
+iter 11000: loss 0.0239, time 147.64ms, mfu 0.07%
+iter 11200: loss 0.0221, time 148.00ms, mfu 0.07%
+iter 11400: loss 0.0216, time 147.15ms, mfu 0.07%
+iter 11600: loss 0.0153, time 147.00ms, mfu 0.07%
+iter 11800: loss 0.0174, time 147.09ms, mfu 0.07%
+step 12000: train loss 0.0148, val loss 0.0147
+iter 12000: loss 0.0220, time 14435.35ms, mfu 0.06%
+iter 12200: loss 0.0186, time 144.78ms, mfu 0.06%
+iter 12400: loss 0.0150, time 148.22ms, mfu 0.06%
+iter 12600: loss 0.0229, time 148.12ms, mfu 0.07%
+iter 12800: loss 0.0209, time 147.09ms, mfu 0.07%
+iter 13000: loss 0.0181, time 148.28ms, mfu 0.07%
+iter 13200: loss 0.0186, time 148.07ms, mfu 0.07%
+iter 13400: loss 0.0198, time 147.04ms, mfu 0.07%
+iter 13600: loss 0.0238, time 147.08ms, mfu 0.07%
+iter 13800: loss 0.0164, time 147.97ms, mfu 0.07%
+step 14000: train loss 0.0133, val loss 0.0133
+iter 14000: loss 0.0206, time 14517.73ms, mfu 0.06%
+iter 14200: loss 0.0235, time 145.87ms, mfu 0.06%
+iter 14400: loss 0.0192, time 147.99ms, mfu 0.06%
+iter 14600: loss 0.0161, time 147.01ms, mfu 0.07%
+iter 14800: loss 0.0188, time 147.57ms, mfu 0.07%
+iter 15000: loss 0.0153, time 172.87ms, mfu 0.07%
+iter 15200: loss 0.0195, time 148.64ms, mfu 0.07%
+iter 15400: loss 0.0127, time 148.73ms, mfu 0.07%
+iter 15600: loss 0.0230, time 147.82ms, mfu 0.07%
+iter 15800: loss 0.0153, time 147.87ms, mfu 0.07%
+step 16000: train loss 0.0119, val loss 0.0123
+iter 16000: loss 0.0184, time 14602.72ms, mfu 0.06%
+iter 16200: loss 0.0144, time 145.82ms, mfu 0.06%
+iter 16400: loss 0.0184, time 150.78ms, mfu 0.06%
+iter 16600: loss 0.0169, time 145.50ms, mfu 0.07%
+iter 16800: loss 0.0160, time 147.25ms, mfu 0.07%
+iter 17000: loss 0.0196, time 146.43ms, mfu 0.07%
+iter 17200: loss 0.0099, time 146.93ms, mfu 0.07%
+iter 17400: loss 0.0146, time 147.00ms, mfu 0.07%
+iter 17600: loss 0.0127, time 146.20ms, mfu 0.07%
+iter 17800: loss 0.0174, time 146.49ms, mfu 0.07%
+step 18000: train loss 0.0112, val loss 0.0108
+iter 18000: loss 0.0183, time 14363.64ms, mfu 0.06%
+iter 18200: loss 0.0185, time 145.13ms, mfu 0.06%
+iter 18400: loss 0.0171, time 146.22ms, mfu 0.06%
+iter 18600: loss 0.0117, time 147.23ms, mfu 0.07%
+iter 18800: loss 0.0150, time 146.84ms, mfu 0.07%
+iter 19000: loss 0.0199, time 146.17ms, mfu 0.07%
+iter 19200: loss 0.0185, time 146.61ms, mfu 0.07%
+iter 19400: loss 0.0178, time 146.74ms, mfu 0.07%
+iter 19600: loss 0.0141, time 146.55ms, mfu 0.07%
+iter 19800: loss 0.0159, time 146.16ms, mfu 0.07%
+step 20000: train loss 0.0100, val loss 0.0103
+iter 20000: loss 0.0124, time 14319.43ms, mfu 0.06%
+iter 20200: loss 0.0165, time 146.31ms, mfu 0.06%
+iter 20400: loss 0.0169, time 144.78ms, mfu 0.07%
+iter 20600: loss 0.0139, time 145.58ms, mfu 0.07%
+iter 20800: loss 0.0167, time 145.74ms, mfu 0.07%
+iter 21000: loss 0.0175, time 145.57ms, mfu 0.07%
+iter 21200: loss 0.0114, time 146.25ms, mfu 0.07%
+iter 21400: loss 0.0153, time 144.68ms, mfu 0.07%
+iter 21600: loss 0.0138, time 145.53ms, mfu 0.07%
+iter 21800: loss 0.0161, time 146.28ms, mfu 0.07%
+step 22000: train loss 0.0096, val loss 0.0093
+iter 22000: loss 0.0133, time 14320.31ms, mfu 0.06%
+iter 22200: loss 0.0155, time 144.01ms, mfu 0.06%
+iter 22400: loss 0.0159, time 145.65ms, mfu 0.07%
+iter 22600: loss 0.0130, time 144.48ms, mfu 0.07%
+iter 22800: loss 0.0128, time 144.99ms, mfu 0.07%
+iter 23000: loss 0.0156, time 145.74ms, mfu 0.07%
+iter 23200: loss 0.0166, time 145.48ms, mfu 0.07%
+iter 23400: loss 0.0121, time 161.04ms, mfu 0.07%
+iter 23600: loss 0.0147, time 145.52ms, mfu 0.07%
+iter 23800: loss 0.0146, time 145.98ms, mfu 0.07%
+step 24000: train loss 0.0088, val loss 0.0087
+iter 24000: loss 0.0138, time 14224.51ms, mfu 0.06%
+iter 24200: loss 0.0153, time 143.79ms, mfu 0.06%
+iter 24400: loss 0.0205, time 145.68ms, mfu 0.07%
+iter 24600: loss 0.0176, time 144.34ms, mfu 0.07%
+iter 24800: loss 0.0137, time 144.94ms, mfu 0.07%
+iter 25000: loss 0.0116, time 165.94ms, mfu 0.07%
+iter 25200: loss 0.0106, time 147.32ms, mfu 0.07%
+iter 25400: loss 0.0170, time 143.51ms, mfu 0.07%
+iter 25600: loss 0.0131, time 145.12ms, mfu 0.07%
+iter 25800: loss 0.0155, time 144.49ms, mfu 0.07%
+step 26000: train loss 0.0083, val loss 0.0086
+iter 26000: loss 0.0134, time 14150.56ms, mfu 0.06%
+iter 26200: loss 0.0139, time 142.76ms, mfu 0.06%
+iter 26400: loss 0.0137, time 143.40ms, mfu 0.07%
+iter 26600: loss 0.0136, time 145.30ms, mfu 0.07%
+iter 26800: loss 0.0154, time 144.93ms, mfu 0.07%
+iter 27000: loss 0.0138, time 144.52ms, mfu 0.07%
+iter 27200: loss 0.0141, time 144.99ms, mfu 0.07%
+iter 27400: loss 0.0139, time 143.77ms, mfu 0.07%
+iter 27600: loss 0.0141, time 144.52ms, mfu 0.07%
+iter 27800: loss 0.0130, time 146.20ms, mfu 0.07%
+step 28000: train loss 0.0075, val loss 0.0076
+iter 28000: loss 0.0159, time 14162.16ms, mfu 0.06%
+iter 28200: loss 0.0146, time 144.02ms, mfu 0.06%
+iter 28400: loss 0.0094, time 144.87ms, mfu 0.07%
+iter 28600: loss 0.0134, time 143.74ms, mfu 0.07%
+iter 28800: loss 0.0167, time 144.24ms, mfu 0.07%
+iter 29000: loss 0.0150, time 144.40ms, mfu 0.07%
+iter 29200: loss 0.0114, time 144.27ms, mfu 0.07%
+iter 29400: loss 0.0104, time 144.29ms, mfu 0.07%
+iter 29600: loss 0.0107, time 144.09ms, mfu 0.07%
+iter 29800: loss 0.0138, time 144.52ms, mfu 0.07%
+step 30000: train loss 0.0079, val loss 0.0080
+iter 30000: loss 0.0097, time 14160.91ms, mfu 0.06%
+iter 30200: loss 0.0110, time 143.96ms, mfu 0.06%
+iter 30400: loss 0.0161, time 144.48ms, mfu 0.07%
+iter 30600: loss 0.0153, time 143.91ms, mfu 0.07%
+iter 30800: loss 0.0139, time 144.37ms, mfu 0.07%
+iter 31000: loss 0.0102, time 143.72ms, mfu 0.07%
+iter 31200: loss 0.0117, time 144.40ms, mfu 0.07%
+iter 31400: loss 0.0096, time 144.72ms, mfu 0.07%
+iter 31600: loss 0.0100, time 143.92ms, mfu 0.07%
+iter 31800: loss 0.0092, time 145.64ms, mfu 0.07%
+step 32000: train loss 0.0077, val loss 0.0070
+iter 32000: loss 0.0116, time 14125.38ms, mfu 0.06%
+iter 32200: loss 0.0132, time 143.85ms, mfu 0.06%
+iter 32400: loss 0.0113, time 144.63ms, mfu 0.07%
+iter 32600: loss 0.0135, time 144.22ms, mfu 0.07%
+iter 32800: loss 0.0086, time 144.52ms, mfu 0.07%
+iter 33000: loss 0.0106, time 144.83ms, mfu 0.07%
+iter 33200: loss 0.0113, time 143.65ms, mfu 0.07%
+iter 33400: loss 0.0092, time 143.92ms, mfu 0.07%
+iter 33600: loss 0.0107, time 144.83ms, mfu 0.07%
+iter 33800: loss 0.0111, time 144.35ms, mfu 0.07%
+step 34000: train loss 0.0066, val loss 0.0067
+iter 34000: loss 0.0112, time 14172.31ms, mfu 0.06%
+iter 34200: loss 0.0123, time 142.92ms, mfu 0.07%
+iter 34400: loss 0.0124, time 143.95ms, mfu 0.07%
+iter 34600: loss 0.0097, time 143.53ms, mfu 0.07%
+iter 34800: loss 0.0137, time 145.12ms, mfu 0.07%
+iter 35000: loss 0.0106, time 166.27ms, mfu 0.07%
+iter 35200: loss 0.0110, time 144.37ms, mfu 0.07%
+iter 35400: loss 0.0111, time 144.73ms, mfu 0.07%
+iter 35600: loss 0.0116, time 143.70ms, mfu 0.07%
+iter 35800: loss 0.0121, time 143.20ms, mfu 0.07%
+step 36000: train loss 0.0068, val loss 0.0067
+iter 36000: loss 0.0103, time 14151.36ms, mfu 0.06%
+iter 36200: loss 0.0132, time 142.57ms, mfu 0.06%
+iter 36400: loss 0.0127, time 144.41ms, mfu 0.07%
+iter 36600: loss 0.0122, time 144.32ms, mfu 0.07%
+iter 36800: loss 0.0075, time 143.15ms, mfu 0.07%
+iter 37000: loss 0.0128, time 143.80ms, mfu 0.07%
+iter 37200: loss 0.0098, time 143.83ms, mfu 0.07%
+iter 37400: loss 0.0108, time 144.37ms, mfu 0.07%
+iter 37600: loss 0.0139, time 143.99ms, mfu 0.07%
+iter 37800: loss 0.0117, time 143.63ms, mfu 0.07%
+step 38000: train loss 0.0064, val loss 0.0065
+iter 38000: loss 0.0141, time 14098.71ms, mfu 0.06%
+iter 38200: loss 0.0113, time 142.74ms, mfu 0.07%
+iter 38400: loss 0.0105, time 144.00ms, mfu 0.07%
+iter 38600: loss 0.0121, time 142.71ms, mfu 0.07%
+iter 38800: loss 0.0147, time 143.48ms, mfu 0.07%
+iter 39000: loss 0.0110, time 145.24ms, mfu 0.07%
+iter 39200: loss 0.0099, time 143.83ms, mfu 0.07%
+iter 39400: loss 0.0147, time 143.83ms, mfu 0.07%
+iter 39600: loss 0.0126, time 143.59ms, mfu 0.07%
+iter 39800: loss 0.0139, time 143.81ms, mfu 0.07%
+step 40000: train loss 0.0066, val loss 0.0064
+iter 40000: loss 0.0107, time 14172.30ms, mfu 0.06%
+Saved model: /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000/dt_model.pth
+Manifest: /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000/manifest.json
+
+========== [eval] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python eval_dt_minari_fetch.py --model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000/dt_model.pth --manifest /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchPickAndPlace-v4-ckpt600000/manifest.json --baseline-model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/checkpoints/sac_her_600000_steps.zip --baseline-algo sac --env-id FetchPickAndPlace-v4 --n-episodes 50 --target-return 0.0 --seed 0 --device cuda --out-dir /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000
+Config: DecisionTransformerConfig(n_layer=3, n_head=1, n_embd=128, dropout=0.1, bias=False, K=20, max_ep_len=128, state_dim=31, act_dim=4, act_discrete=False, act_vocab_size=1, act_tanh=False, tanh_embeddings=False)
+number of parameters: 0.59M
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+Wrote /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000/eval_metrics.json
+DT: {
+  "mean_return": -41.04,
+  "mean_length": 50.0,
+  "success_rate_final": 0.28,
+  "success_rate_any": 0.34,
+  "mean_final_goal_dist": 0.2246604756427596
+}
+Baseline: {
+  "mean_return": -41.02,
+  "mean_length": 50.0,
+  "success_rate_final": 0.24,
+  "success_rate_any": 0.28,
+  "mean_final_goal_dist": 0.22214317722555468
+}
+
+========== [plot] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python plot_dt_vs_baseline.py --input /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000/eval_metrics.json --title DT (z checkpointu 600000) vs checkpoint — FetchPickAndPlace-v4
+Saved /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000/figures/dt_vs_baseline.png
+
+========== GOTOWE ==========
+Eval JSON : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000/eval_metrics.json
+Wykres    : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchpickandplace-v4_600000/figures/dt_vs_baseline.png
+Zbiorczy wykres 3 aktywności (po wszystkich procesach):
+  /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python plot_dt_vs_expert_suite.py --inputs dt_eval_runs\ckpt_*\eval_metrics.json
+Koniec zadania (FetchPickAndPlace-v4 @ 600000).

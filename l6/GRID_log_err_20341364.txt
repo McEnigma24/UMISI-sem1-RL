@@ -1,0 +1,12 @@
+ python/3.12.3-gcccore-13.3.0 unloaded.
+ python/3.12.3-gcccore-13.3.0 loaded.
+ cuda/12.9.1 loaded.
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/minari/utils.py:235: UserWarning: `code_permalink` is set to None. For reproducibility purposes it is highly recommended to link your dataset to versioned code.
+  warnings.warn(
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/lib/python3.12/site-packages/minari/utils.py:284: UserWarning: `eval_env` is set to None. If another environment is intended to be used for evaluation please specify corresponding Gymnasium environment (gym.Env | gym.envs.registration.EnvSpec). If None the environment used to collect the data (`env=EnvSpec(id='FetchSlide-v4', entry_point='gymnasium_robotics.envs.fetch.slide:MujocoFetchSlideEnv', reward_threshold=None, nondeterministic=False, max_episode_steps=50, order_enforce=True, disable_env_checker=False, kwargs={'reward_type': 'sparse'}, namespace=None, name='FetchSlide', version=4, additional_wrappers=(WrapperSpec(name='_MinariGoalInfoPadWrapper', entry_point='__main__:_MinariGoalInfoPadWrapper', kwargs=None),), vector_entry_point=None)`) will be used for this purpose.
+  warnings.warn(
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+[resume] Brak ckpt_iter_*.pth w out-dir — start od zera.
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Baseline zip (cli): /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchSlide-v4/checkpoints/sac_her_600000_steps.zip
