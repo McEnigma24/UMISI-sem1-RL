@@ -6,22 +6,22 @@
     "desired_goal",
     "observation"
   ],
-  "n_episodes": 50,
+  "n_episodes": 1000,
   "seed": 0,
   "target_return": 0.0,
   "dt": {
-    "mean_return": -41.04,
+    "mean_return": -37.828,
     "mean_length": 50.0,
-    "success_rate_final": 0.28,
-    "success_rate_any": 0.34,
-    "mean_final_goal_dist": 0.2246604756427596
+    "success_rate_final": 0.357,
+    "success_rate_any": 0.427,
+    "mean_final_goal_dist": 0.17773171576524055
   },
   "baseline": {
-    "mean_return": -41.02,
+    "mean_return": -36.78,
     "mean_length": 50.0,
-    "success_rate_final": 0.24,
-    "success_rate_any": 0.28,
-    "mean_final_goal_dist": 0.22214317722555468
+    "success_rate_final": 0.374,
+    "success_rate_any": 0.43,
+    "mean_final_goal_dist": 0.17226617250697354
   },
   "baseline_algo": "SAC",
   "baseline_model_path": "/net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchPickAndPlace-v4/checkpoints/sac_her_600000_steps.zip",

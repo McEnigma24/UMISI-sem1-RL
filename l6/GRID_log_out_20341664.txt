@@ -1,0 +1,158 @@
+total 1068
+drwxr-xr-x 11 plgwmackowiak plgrid   4096 Jun  7 13:07 .
+drwxr-xr-x 10 plgwmackowiak plgrid   4096 May 31 12:38 ..
+drwxr-xr-x 17 plgwmackowiak plgrid   4096 Jun  7 02:56 dt_eval_runs
+drwxr-xr-x  7 plgwmackowiak plgrid   4096 Jun  6 20:57 dt_weights
+drwxr-xr-x 12 plgwmackowiak plgrid   4096 Jun  7 01:08 dt_weights_ckpt
+-rw-r--r--  1 plgwmackowiak plgrid  11956 Jun  6 21:54 eval_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid   3303 May 31 21:08 fetch_dt_rollout.py
+drwxr-xr-x  2 plgwmackowiak plgrid   4096 Jun  7 13:07 figures
+-rw-r--r--  1 plgwmackowiak plgrid   1019 Jun  7 00:04 GRID_log_err_20340881.txt
+-rw-r--r--  1 plgwmackowiak plgrid   1018 Jun  7 00:03 GRID_log_err_20340882.txt
+-rw-r--r--  1 plgwmackowiak plgrid   1026 Jun  7 00:07 GRID_log_err_20340883.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2497 Jun  7 02:52 GRID_log_err_20341358.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2492 Jun  7 02:50 GRID_log_err_20341359.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2534 Jun  7 02:56 GRID_log_err_20341360.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2497 Jun  7 02:53 GRID_log_err_20341361.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2492 Jun  7 02:47 GRID_log_err_20341362.txt
+-rw-r--r--  1 plgwmackowiak plgrid     99 Jun  7 01:02 GRID_log_err_20341363.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2497 Jun  7 02:52 GRID_log_err_20341364.txt
+-rw-r--r--  1 plgwmackowiak plgrid   2534 Jun  7 02:50 GRID_log_err_20341365.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341660.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341661.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341662.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341663.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341664.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341665.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341666.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341667.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341668.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_err_20341669.txt
+-rw-r--r--  1 plgwmackowiak plgrid  17830 Jun  7 00:04 GRID_log_out_20340881.txt
+-rw-r--r--  1 plgwmackowiak plgrid  17806 Jun  7 00:03 GRID_log_out_20340882.txt
+-rw-r--r--  1 plgwmackowiak plgrid  17677 Jun  7 00:07 GRID_log_out_20340883.txt
+-rw-r--r--  1 plgwmackowiak plgrid  22318 Jun  7 02:52 GRID_log_out_20341358.txt
+-rw-r--r--  1 plgwmackowiak plgrid  22773 Jun  7 02:50 GRID_log_out_20341359.txt
+-rw-r--r--  1 plgwmackowiak plgrid  23642 Jun  7 02:56 GRID_log_out_20341360.txt
+-rw-r--r--  1 plgwmackowiak plgrid  22798 Jun  7 02:53 GRID_log_out_20341361.txt
+-rw-r--r--  1 plgwmackowiak plgrid  23410 Jun  7 02:47 GRID_log_out_20341362.txt
+-rw-r--r--  1 plgwmackowiak plgrid   9099 Jun  7 01:02 GRID_log_out_20341363.txt
+-rw-r--r--  1 plgwmackowiak plgrid  22801 Jun  7 02:52 GRID_log_out_20341364.txt
+-rw-r--r--  1 plgwmackowiak plgrid  23643 Jun  7 02:50 GRID_log_out_20341365.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341660.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341661.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341662.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7091 Jun  7 13:07 GRID_log_out_20341663.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_out_20341664.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341665.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341666.txt
+-rw-r--r--  1 plgwmackowiak plgrid   7109 Jun  7 13:07 GRID_log_out_20341667.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_out_20341668.txt
+-rw-r--r--  1 plgwmackowiak plgrid      0 Jun  7 13:07 GRID_log_out_20341669.txt
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPickAndPlace-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPickAndPlace-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPickAndPlace-v4_600000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPush-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPush-v4_300000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchPush-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchSlide-v4_200000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchSlide-v4_400000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchSlide-v4_600000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  7 13:07 latest_job_FetchSlide-v4_800000
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  6 22:47 latest_job_pnp
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  6 22:47 latest_job_push
+-rw-r--r--  1 plgwmackowiak plgrid      9 Jun  6 22:47 latest_job_slide
+-rw-r--r--  1 plgwmackowiak plgrid      9 May 31 19:35 latest_job_started
+-rwxr-xr-x  1 plgwmackowiak plgrid     47 May 31 12:39 lsc_cancel.sh
+-rw-r--r--  1 plgwmackowiak plgrid    928 May 31 13:02 lsc_job
+-rw-r--r--  1 plgwmackowiak plgrid   2597 Jun  7 13:07 lsc_job_ckpt
+-rwxr-xr-x  1 plgwmackowiak plgrid   2190 Jun  7 13:07 lsc_run_ckpt.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid     98 May 31 12:39 lsc_run.sh
+-rwxr-xr-x  1 plgwmackowiak plgrid     35 May 31 12:39 lsc_status.sh
+drwxr-xr-x  3 plgwmackowiak plgrid   4096 Jun  7 01:08 minari_datasets
+drwxr-xr-x 16 plgwmackowiak plgrid   4096 Jun  7 01:08 minari_recordings
+drwxr-xr-x  2 plgwmackowiak plgrid   4096 Jun  6 20:57 _my_picks_
+-rw-r--r--  1 plgwmackowiak plgrid  15095 Jun  6 22:47 nanodt_train_loop.py
+-rw-r--r--  1 plgwmackowiak plgrid    990 May 31 12:45 .plgrid_commands
+-rw-r--r--  1 plgwmackowiak plgrid   5452 Jun  6 20:57 plot_dt_vs_baseline.py
+-rw-r--r--  1 plgwmackowiak plgrid   8588 Jun  6 20:57 plot_dt_vs_expert_suite.py
+drwxr-xr-x  2 plgwmackowiak plgrid   4096 Jun  6 22:47 __pycache__
+-rw-r--r--  1 plgwmackowiak plgrid      5 May 31 12:38 .python-version
+-rw-r--r--  1 plgwmackowiak plgrid 374075 Jun  7 13:07 raport_dt_checkpointy.ipynb
+-rw-r--r--  1 plgwmackowiak plgrid  16886 Jun  6 20:57 README.md
+-rw-r--r--  1 plgwmackowiak plgrid  17702 May 31 21:08 record_expert_minari.py
+-rw-r--r--  1 plgwmackowiak plgrid    879 May 31 21:08 requirements.txt
+-rw-r--r--  1 plgwmackowiak plgrid  12423 Jun  7 00:17 run_ckpt_pipeline.py
+-rw-r--r--  1 plgwmackowiak plgrid   2494 May 31 13:07 sb3_log_progress.py
+-rw-r--r--  1 plgwmackowiak plgrid  10730 Jun  7 00:17 SPRAWOZDANIE.md
+-rw-r--r--  1 plgwmackowiak plgrid  20840 Jun  6 22:15 train_dt_minari_fetch.py
+-rw-r--r--  1 plgwmackowiak plgrid   3827 Jun  6 20:57 train_dt_minari_multi.py
+-rw-r--r--  1 plgwmackowiak plgrid  13749 Jun  6 21:54 train_expert_ppo.py
+-rw-r--r--  1 plgwmackowiak plgrid  37365 May 31 19:35 train_expert_sac_her_fetch.py
+drwxr-xr-x  6 plgwmackowiak plgrid   4096 May 31 16:33 weights
+ulimit -n = 16384
+SOURCING -> /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/activate
+=== DT ckpt pipeline: FetchSlide-v4 @ 400000 (ep=1800 iters=40000 eval_ep=1000 stages=eval,plot) ===
+Sun Jun  7 13:07:41 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.274.02             Driver Version: 535.274.02   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  Tesla V100-SXM2-32GB           On  | 00000000:32:00.0 Off |                    0 |
+| N/A   38C    P0              40W / 300W |      0MiB / 32768MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+cuda? True
+================================================================
+AKTYWNOŚĆ        : FetchSlide-v4
+CHECKPOINT       : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchSlide-v4/checkpoints/sac_her_400000_steps.zip
+DATASET-ID       : l6/fetchslide-v4/ckpt400000-sac-v0
+MINARI ROOT      : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/minari_datasets
+DT OUT           : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchSlide-v4-ckpt400000
+EVAL OUT         : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000
+ETAPY            : eval, plot
+================================================================
+
+========== [eval] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python eval_dt_minari_fetch.py --model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchSlide-v4-ckpt400000/dt_model.pth --manifest /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_weights_ckpt/FetchSlide-v4-ckpt400000/manifest.json --baseline-model /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/weights/besties/FetchSlide-v4/checkpoints/sac_her_400000_steps.zip --baseline-algo sac --env-id FetchSlide-v4 --n-episodes 1000 --target-return 0.0 --seed 0 --device cuda --out-dir /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000
+Config: DecisionTransformerConfig(n_layer=3, n_head=1, n_embd=128, dropout=0.1, bias=False, K=20, max_ep_len=128, state_dim=31, act_dim=4, act_discrete=False, act_vocab_size=1, act_tanh=False, tanh_embeddings=False)
+number of parameters: 0.59M
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+Wrote /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000/eval_metrics.json
+DT: {
+  "mean_return": -46.873,
+  "mean_length": 50.0,
+  "success_rate_final": 0.15,
+  "success_rate_any": 0.18,
+  "mean_final_goal_dist": 0.18518541215531506
+}
+Baseline: {
+  "mean_return": -45.007,
+  "mean_length": 50.0,
+  "success_rate_final": 0.21,
+  "success_rate_any": 0.267,
+  "mean_final_goal_dist": 0.1989965148848469
+}
+
+========== [plot] ==========
+/net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python plot_dt_vs_baseline.py --input /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000/eval_metrics.json --title DT (z checkpointu 400000) vs checkpoint — FetchSlide-v4
+Saved /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000/figures/dt_vs_baseline.png
+
+========== GOTOWE ==========
+Eval JSON : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000/eval_metrics.json
+Wykres    : /net/people/plgrid/plgwmackowiak/UMISI-sem1-RL/l6/dt_eval_runs/ckpt_fetchslide-v4_400000/figures/dt_vs_baseline.png
+Zbiorczy wykres 3 aktywności (po wszystkich procesach):
+  /net/afscra/people/plgwmackowiak/UMISI-sem1-RL/l6/.venv/bin/python plot_dt_vs_expert_suite.py --inputs dt_eval_runs\ckpt_*\eval_metrics.json
+Koniec zadania (FetchSlide-v4 @ 400000).
