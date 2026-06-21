@@ -1,0 +1,9 @@
+Tym razem zadanko miniaturka. Załączniki zawierają już działający kod zarządzający treningiem GPRO zmuszającym model językowy do używania prostszego języka. Niestety - model szybko popadnie w "reward hacking" i zacznie psuć odpowiedzi w sprytny sposób.
+
+Nasze zadania:
+ - rozszerzyć pulę pytań walidacyjnych o kilka dodatkowych;
+ - zaobserwować jak zmieniają się odpowiedzi po kilkudziesięciu-kilkuset iteracjach treningu;
+ - dodać dodatkową karę "za oszukiwanie" (trzeba ją zaprojektować osobiście);
+ - sprawdzić, czy pomogła;
+ - jeżeli mamy nowy hacking - spróbować znów mu zapobiec;
+ - przeczytać i ocenić efekty (odpowiedzi na pytania).
