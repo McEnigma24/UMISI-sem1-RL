@@ -10,11 +10,17 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainerCallback
 
 from data import build_dataset
-from rewards import reward_correctness, reward_vocab
+from rewards import reward_anti_hack, reward_correctness, reward_vocab
 from vocab import load_vocab, vocab_fraction
 
 MODEL_ID = "HuggingFaceTB/SmolLM2-135M-Instruct"
 RUNS_BASE = "runs"
+PROBE_QUESTIONS_PATH = os.path.join(os.path.dirname(__file__), "probe_questions.txt")
+
+
+def load_probe_questions(path: str = PROBE_QUESTIONS_PATH) -> list[str]:
+    with open(path, encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
 
 
 def next_run_dir(suffix: str) -> str:
@@ -45,23 +51,17 @@ def setup_run(suffix: str, config: dict) -> str:
 
 
 class ConversationLoggerCallback(TrainerCallback):
-    PROBE_QUESTIONS = [
-        "What is the capital of France?",
-        "How does the sun make light?",
-        "Why is the sky blue?",
-        "What is 17 multiplied by 6?",
-        "Who wrote Romeo and Juliet?",
-    ]
-
     def __init__(
         self,
         tokenizer,
         vocab: set[str],
         run_dir: str,
         log_every_steps: int = 50,
+        probe_questions: list[str] | None = None,
     ):
         self.tokenizer = tokenizer
         self.vocab = vocab
+        self.probe_questions = probe_questions or load_probe_questions()
         self.conv_dir = os.path.join(run_dir, "conversations")
         self.tb_dir = os.path.join(run_dir, "tensorboard")
         self.log_every_steps = log_every_steps
@@ -82,7 +82,7 @@ class ConversationLoggerCallback(TrainerCallback):
         scores = []
         records = []
 
-        for question in self.PROBE_QUESTIONS:
+        for question in self.probe_questions:
             msgs = [{"role": "user", "content": question}]
             prompt = self.tokenizer.apply_chat_template(
                 msgs, add_generation_prompt=True, tokenize=False
@@ -290,7 +290,7 @@ def main():
 
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=[reward_vocab, reward_correctness],
+        reward_funcs=[reward_vocab, reward_correctness, reward_anti_hack],
         args=grpo_args,
         train_dataset=dataset,
         processing_class=tokenizer,
