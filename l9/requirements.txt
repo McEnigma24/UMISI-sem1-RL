@@ -6,3 +6,5 @@ peft>=0.13
 datasets>=2.20
 wordfreq>=3.0
 tensorboard>=2.14
+matplotlib>=3.8
+pandas>=2.0

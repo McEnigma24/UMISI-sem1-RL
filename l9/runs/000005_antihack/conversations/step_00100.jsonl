@@ -1,0 +1,10 @@
+{"step": 100, "question": "What is the capital of France?", "response": "The capital of France is Paris", "vocab_score": 0.5}
+{"step": 100, "question": "How does the sun make light?", "response": "The sun makes light by using a process called solar radiation.", "vocab_score": 0.727}
+{"step": 100, "question": "Why is the sky blue?", "response": "The sky blue is because of the way the light from the sun interacts with the Earth's atmosphere. When sunlight enters the Earth's atmosphere, it is scattered in all directions by the molecules of air. This scattering effect is known as Rayleigh scattering.\n\nThe blue light is scattered more than the other colors, resulting in the blue color of the sky. The blue light is scattered in all directions", "vocab_score": 0.704}
+{"step": 100, "question": "What is 17 multiplied by 6?", "response": "17 multiplied by 6 equals 108.", "vocab_score": 0.333}
+{"step": 100, "question": "Who wrote Romeo and Juliet?", "response": "The play \"Romeo and Juliet\" by William Shakespeare.", "vocab_score": 0.5}
+{"step": 100, "question": "What is the largest planet in our solar system?", "response": "The largest planet in our solar system is Jupiter.", "vocab_score": 0.556}
+{"step": 100, "question": "How many days are in a leap year?", "response": "A leap year is a year that has 366 days.", "vocab_score": 0.889}
+{"step": 100, "question": "What gas do plants take in from the air?", "response": "Plants take in gas from the air through their roots.", "vocab_score": 0.7}
+{"step": 100, "question": "Who was the first person to walk on the moon?", "response": "The first person to walk on the moon was Neil Armstrong.", "vocab_score": 0.727}
+{"step": 100, "question": "What is the boiling point of water in Celsius?", "response": "The boiling point of water in Celsius is 100 degrees Celsius.", "vocab_score": 0.6}

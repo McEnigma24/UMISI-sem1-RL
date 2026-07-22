@@ -13,7 +13,7 @@ def _tokenise(text: str) -> list[str]:
 
 
 def correctness_score(completion: str, aliases: list[str]) -> float:
-    """Return 0.0 (wrong), 0.5 (partial), or 1.0 (exact match)."""
+    # 0.0 = źle, 0.5 = częściowe dopasowanie aliasu, 1.0 = dokładnie
     norm_c = _normalise(completion)
     score = 0.0
     for alias in aliases:
@@ -22,7 +22,7 @@ def correctness_score(completion: str, aliases: list[str]) -> float:
             continue
         if norm_a == norm_c:
             return 1.0
-        if norm_a in norm_c:
+        if re.search(rf"\b{re.escape(norm_a)}\b", norm_c):
             score = max(score, 0.5)
     return score
 
@@ -50,7 +50,6 @@ def reward_anti_hack(
     answer_aliases: list[list[str]],
     **kwargs,
 ) -> list[float]:
-    """Penalise gaming the vocab reward without answering correctly."""
     scores = []
     for completion, aliases in zip(completions, answer_aliases):
         penalty = 0.0
@@ -58,19 +57,16 @@ def reward_anti_hack(
         vocab = vocab_fraction(completion, VOCAB)
         tokens = _tokenise(completion)
 
-        # High simple-vocab share with no correct answer = reward hacking.
         if corr == 0.0 and vocab > 0.6:
-            penalty += 0.5 * vocab
+            penalty += 0.3 * vocab
 
-        # Long, wrong completions that only chase partial substring matches.
-        if corr < 1.0 and len(tokens) > 8:
-            penalty += 0.15 * (len(tokens) - 8)
+        if corr == 0.0 and len(tokens) > 8:
+            penalty += 0.08 * (len(tokens) - 8)
 
-        # Repetitive token loops (e.g. "the the the ...").
         if tokens:
             max_repeat = max(tokens.count(t) for t in set(tokens))
             if max_repeat >= 4:
-                penalty += 0.2 * (max_repeat - 3)
+                penalty += 0.15 * (max_repeat - 3)
 
         scores.append(-penalty)
     return scores

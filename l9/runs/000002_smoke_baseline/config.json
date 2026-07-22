@@ -1,0 +1,27 @@
+{
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "mode": "smoke",
+  "device": "cpu",
+  "dtype": "float32",
+  "resumed_from": null,
+  "n_train": 20,
+  "anti_hack": false,
+  "lora": {
+    "r": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05
+  },
+  "grpo": {
+    "max_steps": 20,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "num_generations": 4,
+    "max_completion_length": 40,
+    "learning_rate": 5e-05,
+    "beta": 0.05,
+    "bf16": false,
+    "gradient_checkpointing": true,
+    "logging_steps": 5,
+    "save_steps": 20
+  }
+}

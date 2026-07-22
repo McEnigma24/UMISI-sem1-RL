@@ -2,6 +2,21 @@ import argparse
 import json
 import os
 
+# Przy problemach z certyfikatem SSL (sieć AGH): HF_SSL_VERIFY=0
+if os.environ.get("HF_SSL_VERIFY", "1") == "0":
+    import httpx
+    import huggingface_hub.utils._http as _hf_http
+
+    def _insecure_hf_client() -> httpx.Client:
+        return httpx.Client(
+            event_hooks={"request": [_hf_http.hf_request_event_hook]},
+            follow_redirects=True,
+            timeout=None,
+            verify=False,
+        )
+
+    _hf_http.set_client_factory(_insecure_hf_client)
+
 from trl import GRPOTrainer, GRPOConfig
 
 import torch
@@ -170,6 +185,18 @@ def parse_args():
         default=50,
         help="Log probe conversations every N steps (default: 50)",
     )
+    p.add_argument(
+        "--max-steps",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Stop after N optimizer steps (overrides num_train_epochs when set)",
+    )
+    p.add_argument(
+        "--no-anti-hack",
+        action="store_true",
+        help="Disable the anti-hacking reward (baseline run)",
+    )
     return p.parse_args()
 
 
@@ -224,6 +251,9 @@ def main():
             report_to="tensorboard",
             dataloader_num_workers=0,
         )
+        if args.max_steps is not None:
+            grpo_params["max_steps"] = args.max_steps
+            grpo_params.pop("num_train_epochs", None)
         log_every = args.log_every
         n_train = args.n_train
 
@@ -247,6 +277,7 @@ def main():
         "dtype": str(dtype).replace("torch.", ""),
         "resumed_from": args.resume,
         "n_train": n_train,
+        "anti_hack": not args.no_anti_hack,
         "lora": lora_params,
         "grpo": {k: v for k, v in grpo_params.items()
                  if k not in ("report_to", "dataloader_num_workers",
@@ -288,9 +319,13 @@ def main():
         log_every_steps=log_every,
     )
 
+    reward_funcs = [reward_vocab, reward_correctness]
+    if not args.no_anti_hack:
+        reward_funcs.append(reward_anti_hack)
+
     trainer = GRPOTrainer(
         model=model,
-        reward_funcs=[reward_vocab, reward_correctness, reward_anti_hack],
+        reward_funcs=reward_funcs,
         args=grpo_args,
         train_dataset=dataset,
         processing_class=tokenizer,
